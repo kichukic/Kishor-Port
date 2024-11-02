@@ -1,6 +1,6 @@
 {
   "name": "kishorport",
- "homepage": "https://kichukic.github.io/Kishor-Port",
+  "homepage": "https://kichukic.github.io/Kishor-Port",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

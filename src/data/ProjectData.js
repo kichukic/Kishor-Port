@@ -1,7 +1,7 @@
 // --------------------------------------- Project List
 export const ProjectList = [
   {
-    img: "/oie_P6YWDKRRGnXc.png",
+    img: "/chatapp.png",
     title: "Chat-App",
     description:
       "A real-time chat application built with Node.js, Express, and WebSockets, enabling instant messaging between users. Utilized MongoDB for storing chat history and user data, with JWT authentication for secure access. The application provides a responsive, seamless experience for users and is designed to handle multiple concurrent connections efficiently.",
