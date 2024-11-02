@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/kishor-Port/static/css/main.d70188eb.css",
+    "main.js": "/kishor-Port/static/js/main.6d1077fb.js",
+    "index.html": "/kishor-Port/index.html",
+    "static/media/blob-haikei.svg": "/kishor-Port/static/media/blob-haikei.ed4231cd548cd312fe4f.svg",
+    "main.d70188eb.css.map": "/kishor-Port/static/css/main.d70188eb.css.map",
+    "main.6d1077fb.js.map": "/kishor-Port/static/js/main.6d1077fb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d70188eb.css",
+    "static/js/main.6d1077fb.js"
+  ]
+}
