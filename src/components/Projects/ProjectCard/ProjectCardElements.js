@@ -2,12 +2,12 @@ import styled from "@emotion/styled";
 
 export const Card = styled.div`
   display: grid;
-  grid-gap: 2rem;
+  grid-gap: 1rem;
   margin-bottom: 4rem;
   grid-template-columns: 1fr;
   padding-bottom: 2rem;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 50px;
   box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
   @media (min-width: 992px) {
@@ -38,10 +38,10 @@ export const CardRight = styled.div`
 
   p {
     font-weight: 400;
-    max-width: 95%;
-    margin-top: 10px;
+    max-width: 100%;
+    margin-top: 1px;
     margin-bottom: 1rem;
-    color: rgba(0, 0, 0, 0.815);
+    color: #ffffff;
     text-align: center;
 
     @media (min-width: 992px) {
@@ -50,12 +50,12 @@ export const CardRight = styled.div`
   }
   @media (min-width: 992px) {
     align-items: flex-start;
-    margin-top: 1rem;
+    margin-top: 0rem;
   }
 `;
 
 export const BtnGroup = styled.div`
-  height: 70px;
+  height: 80px;
   display: flex;
   align-items: center;
 `;
@@ -70,8 +70,8 @@ export const TechCardContainer = styled.div`
 `;
 
 export const TechCard = styled.div`
-  border-radius: 10px;
-  background-color: #f5f5f5;
+  border-radius: 40px;
+  background-color: #d4d4da;
   padding: 5px 10px;
   margin: 5px;
   display: flex;
@@ -79,7 +79,7 @@ export const TechCard = styled.div`
   justify-content: center;
   font-size: 15px;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.815);
+  color: #000;
   cursor: default;
   box-shadow: 0px 2px 5px rgba(160, 170, 180, 0.6);
 `;
