@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.css": "/Kishor-Port/static/css/main.0a1ff0af.css",
-    "main.js": "/Kishor-Port/static/js/main.82cc3df6.js",
+    "main.css": "/Kishor-Port/static/css/main.73ac4641.css",
+    "main.js": "/Kishor-Port/static/js/main.89c9a414.js",
     "index.html": "/Kishor-Port/index.html",
     "static/media/blob-haikei.svg": "/Kishor-Port/static/media/blob-haikei.ed4231cd548cd312fe4f.svg",
-    "main.0a1ff0af.css.map": "/Kishor-Port/static/css/main.0a1ff0af.css.map",
-    "main.82cc3df6.js.map": "/Kishor-Port/static/js/main.82cc3df6.js.map"
+    "main.73ac4641.css.map": "/Kishor-Port/static/css/main.73ac4641.css.map",
+    "main.89c9a414.js.map": "/Kishor-Port/static/js/main.89c9a414.js.map"
   },
   "entrypoints": [
-    "static/css/main.0a1ff0af.css",
-    "static/js/main.82cc3df6.js"
+    "static/css/main.73ac4641.css",
+    "static/js/main.89c9a414.js"
   ]
 }
