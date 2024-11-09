@@ -12,6 +12,7 @@ import {
 } from "./HeroElements";
 import { TypeAnimation } from 'react-type-animation';
 import ScrollAnimation from "react-animate-on-scroll";
+import Manservo from "../../images/About.png"
 
 function Hero() {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,7 +89,7 @@ function Hero() {
           <HeroRight>
             <ScrollAnimation animateIn="fadeIn">
               <Image
-                src="https://westus31-mediap.svc.ms/transform/thumbnail?provider=spo&farmid=193933&inputFormat=png&cs=MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDQ4MTcxMGE0fFNQTw&docid=https%3A%2F%2Fmy.microsoftpersonalcontent.com%2F_api%2Fv2.0%2Fdrives%2Fb!m8img1Ftu0yAqIgrZByUoAejJR3Rtf1AkiDh2bh0UwAp3QKo0QBuSIzAa-W3Rl2B%2Fitems%2F017LRROJ2OYSHRQZGJHFD2ON7M2B2SWPDL%3Ftempauth%3Dv1e.eyJzaXRlaWQiOiI4M2E2Yzg5Yi02ZDUxLTRjYmItODBhOC04ODJiNjQxYzk0YTAiLCJhcHBpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDA0ODE3MTBhNCIsImF1ZCI6IjAwMDAwMDAzLTAwMDAtMGZmMS1jZTAwLTAwMDAwMDAwMDAwMC9teS5taWNyb3NvZnRwZXJzb25hbGNvbnRlbnQuY29tQDkxODgwNDBkLTZjNjctNGM1Yi1iMTEyLTM2YTMwNGI2NmRhZCIsImV4cCI6IjE3MzA2MzUyMDAifQ.2x7NSQovWucMUHCSJCmtJlRySAr8FGR4DDpWqoH9g7svU7mRPKXDgNeuUXdghnDd0hFXQNuICVQEbC2Ev2PdEgxEIulXG7p4ovdWVD5YrXx7tYDh4X1p5Wff22DoEQhz1LunKmttjtJwwb1ravtHftMLUsoxCeZDsmaOC5Fs-znWwkxXA1AtYdvVlmTNv0akHB_UI12WMktoTJBr8-kMMExqFpWmNu63AD74x6dAYwRFMj_-wI7yYxUjy3ZWxQlhT9bTKziXO7ylNysSI9K4LZlsnXrEK8UQGHB3kmB2rFNKsY4OeZdd4PyxTHCkpbmzlHCzlVjk9jzZr5FgoT0mIgqMn5FQx2gcfbhq9wlNdFkm8q5kQgKCVZ6MQxmrz9JT.P1IfBEGY8kAriiWrltrbQXciE07xxYQakxFsNgim0J4%26version%3DPublished&cb=63866215074&encodeFailures=1&width=1278&height=945"
+                src={Manservo}
                 alt="man-svgrepo"
               />
             </ScrollAnimation>
