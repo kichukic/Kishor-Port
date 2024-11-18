@@ -1,0 +1,48 @@
+.large-certification {
+    transform: scale(1.2); 
+    font-size: 7px; 
+    display:flex;
+    justify-items: center;
+    
+  }
+  
+  .large-certification .testdome-certificate-name,
+  .large-certification .testdome-certificate-test-name,
+  .large-certification .testdome-certificate-card-logo {
+    font-size: 1.5em; /* Adjust font sizes of text */
+  }
+  
+  .large-certification .testdome-certificate-card-logo {
+    line-height: 1.5;
+  }
+
+  
+  .title{
+    font-size: 20px;
+    display: flex;
+    font-weight: bold;
+    padding: 2px;
+    padding-right: 2px;
+  }
+
+  .test {
+    display: flex;
+    gap: 60px; /* Space between the cards */
+    justify-content: flex-start; /* Center the cards horizontally */
+    flex-wrap: wrap; /* Wrap to the next line on smaller screens */
+    padding-left: 60px;
+  }
+  
+  .certificate-image {
+    width: 250px; /* Adjust width as needed */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 20px; /* Optional: adds rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Optional: adds a shadow */
+    transition: transform 0.2s; /* Smooth zoom on hover */
+    padding-left: 108px;
+  }
+
+  .certificate-image:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+    cursor: pointer; /* Show pointer cursor */
+  }
