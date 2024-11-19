@@ -82,9 +82,6 @@ Demonstrates proficiency in JavaScript and Node.js concepts, verified through pr
           </a>   
          </ScrollAnimation>
 </div>
-
-
-        
         </div>
       </div>
     </ContactWrapper>
