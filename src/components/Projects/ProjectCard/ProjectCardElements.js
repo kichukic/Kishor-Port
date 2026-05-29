@@ -6,18 +6,19 @@ export const Card = styled(motion.div)`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  background: ${({ theme }) => theme.cardBg};
-  border: 1px solid ${({ theme }) => theme.cardBorder};
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
   border-radius: 20px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 
   &:hover {
-    border-color: ${({ theme }) => theme.neon};
-    box-shadow: ${({ theme }) => theme.shadow};
-    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.08);
+    transform: translateY(-8px);
   }
 
   @media (max-width: 768px) {

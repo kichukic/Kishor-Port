@@ -2,21 +2,79 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 
 export const ContactGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
+  align-items: center;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+`;
+
+export const ContactLeft = styled(motion.div)`
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
 `;
 
-export const ContactInfo = styled(motion.div)`
+export const ContactRight = styled(motion.div)`
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  text-align: center;
-  gap: 1.5rem;
-  max-width: 550px;
   width: 100%;
 `;
+
+export const ContactInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 1.5rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 2.5rem;
+
+  @media (max-width: 768px) {
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem;
+  }
+`;
+
+export const ConnectionVectorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+`;
+
+export const ConnectionVectorGif = styled.img`
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.12));
+  animation: floatSocket 5s ease-in-out infinite;
+
+  @keyframes floatSocket {
+    0% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-10px) scale(1.02); }
+    100% { transform: translateY(0px) scale(1); }
+  }
+
+  @media (max-width: 768px) {
+    max-width: 320px;
+  }
+`;
+
 
 export const InfoTitle = styled.h3`
   font-size: 1.4rem;
@@ -33,10 +91,14 @@ export const InfoText = styled.p`
 export const InfoItem = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1rem;
   color: ${({ theme }) => theme.textSecondary};
   font-size: 0.95rem;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 
   svg {
     font-size: 1.3rem;
@@ -56,9 +118,14 @@ export const InfoItem = styled.div`
 
 export const SocialRow = styled.div`
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1rem;
   margin-top: 1rem;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 export const SocialLink = styled.a`

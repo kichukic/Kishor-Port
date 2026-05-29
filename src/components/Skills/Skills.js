@@ -5,7 +5,9 @@ import SectionWrapper from '../shared/SectionWrapper';
 import {
   SkillsGrid,
   CategoryCard,
+  CategoryHeader,
   CategoryTitle,
+  CategoryVectorIcon,
   SkillRow,
   SkillHeader,
   SkillInfo,
@@ -15,6 +17,18 @@ import {
   ProgressTrack,
   ProgressFill,
 } from './SkillsElements';
+
+import BackendCategoryGif from '../../images/backend_dev_hero.gif';
+import DatabaseCategoryGif from '../../images/database_category_vector.gif';
+import CloudCategoryGif from '../../images/cloud_category_vector.gif';
+import ToolsCategoryGif from '../../images/tools_category_vector.gif';
+
+const categoryIcons = {
+  'Backend': BackendCategoryGif,
+  'Database': DatabaseCategoryGif,
+  'DevOps & Cloud': CloudCategoryGif,
+  'Languages & Tools': ToolsCategoryGif,
+};
 
 const containerVariants = {
   hidden: {},
@@ -44,7 +58,12 @@ function Skills() {
       >
         {skillCategories.map((cat) => (
           <CategoryCard key={cat.category} variants={cardVariants}>
-            <CategoryTitle>{cat.category}</CategoryTitle>
+            <CategoryHeader>
+              <CategoryTitle>{cat.category}</CategoryTitle>
+              {categoryIcons[cat.category] && (
+                <CategoryVectorIcon src={categoryIcons[cat.category]} alt={cat.category} />
+              )}
+            </CategoryHeader>
             {cat.skills.map((skill) => (
               <SkillRow key={skill.name}>
                 <SkillHeader>
@@ -73,3 +92,4 @@ function Skills() {
 }
 
 export default Skills;
+

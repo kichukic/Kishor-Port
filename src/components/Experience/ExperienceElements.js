@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 import { motion } from 'framer-motion';
 
 export const TimelineWrapper = styled.div`
@@ -41,6 +42,18 @@ export const TimelineItem = styled(motion.div)`
   }
 `;
 
+const glowRipple = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(255, 255, 255, 0.2);
+  }
+  55% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.2), 0 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(255, 255, 255, 0), 0 0 0 40px rgba(255, 255, 255, 0);
+  }
+`;
+
 export const Dot = styled.div`
   position: absolute;
   left: 16px;
@@ -49,9 +62,9 @@ export const Dot = styled.div`
   height: 18px;
   border-radius: 50%;
   background: ${({ theme }) => theme.body};
-  border: 3px solid ${({ theme }) => theme.neon};
-  box-shadow: 0 0 12px ${({ theme }) => theme.glow};
+  border: 3px solid #ffffff;
   z-index: 2;
+  animation: ${glowRipple} 2.5s infinite ease-out;
 
   @media (min-width: 768px) {
     left: auto;
@@ -61,16 +74,17 @@ export const Dot = styled.div`
 `;
 
 export const Card = styled.div`
-  background: ${({ theme }) => theme.cardBg};
-  border: 1px solid ${({ theme }) => theme.cardBorder};
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
   padding: 1.5rem;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    border-color: ${({ theme }) => theme.neon};
-    box-shadow: ${({ theme }) => theme.shadow};
-    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.08);
+    transform: translateY(-8px) scale(1.02);
   }
 `;
 
