@@ -88,9 +88,6 @@ function Footer() {
               <FiLinkedin />
             </FooterLink>
           </FooterLinks>
-          <FooterText>
-            Built with <FiHeart /> by Kishor TH &copy; {new Date().getFullYear()}
-          </FooterText>
         </FooterInner>
       </div>
     </FooterWrapper>

@@ -47,7 +47,7 @@ function About() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Bio>
-            Dynamic <strong>Node.js developer</strong> with 3 years of experience in
+            Dynamic <strong>Node.js developer</strong> with 4 years of experience in
             building scalable, efficient backend solutions. Expertise in{' '}
             <strong>Node.js</strong>, <strong>Express.js</strong>,{' '}
             <strong>MongoDB</strong>, and <strong>MySQL</strong>, along with cloud
@@ -67,7 +67,7 @@ function About() {
             <strong>English</strong>, <strong>Malayalam</strong>, and{' '}
             <strong>Hindi</strong>.
           </Bio>
-
+ 
           <StatsRow>
             <StatCard
               whileHover={{ y: -5 }}
@@ -76,7 +76,7 @@ function About() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              <StatNumber>3+</StatNumber>
+              <StatNumber>4+</StatNumber>
               <StatLabel>Years Experience</StatLabel>
             </StatCard>
             <StatCard

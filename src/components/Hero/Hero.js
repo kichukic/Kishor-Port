@@ -110,7 +110,7 @@ function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              Dynamic Node.js developer with 3 years of experience building
+              Dynamic Node.js developer with 4 years of experience building
               scalable backend systems, robust APIs, and cloud-native solutions
               on AWS and GCP. Currently building AI-driven platforms with LLM integration.
             </Description>
@@ -160,21 +160,6 @@ function Hero() {
         </HeroContent>
         <TerminalConsole />
       </div>
-
-      {showScroll && (
-        <ScrollIndicator
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <span>Scroll</span>
-          <ScrollDot
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          />
-          <FiArrowDown size={14} />
-        </ScrollIndicator>
-      )}
     </HeroSection>
   );
 }
