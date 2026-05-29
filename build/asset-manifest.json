@@ -1,17 +1,25 @@
 {
   "files": {
     "main.css": "/Kishor-Port/static/css/main.a463c17a.css",
-    "main.js": "/Kishor-Port/static/js/main.611a6040.js",
-    "static/media/matrix-digital-moewalls-com.mp4": "/Kishor-Port/static/media/matrix-digital-moewalls-com.c8a0d360fec13e91f089.mp4",
+    "main.js": "/Kishor-Port/static/js/main.c48f92d7.js",
     "static/media/black-hole-gargantua-moewalls-com.mp4": "/Kishor-Port/static/media/black-hole-gargantua-moewalls-com.adc48bbf71ee0d2e1a72.mp4",
-    "static/media/About.png": "/Kishor-Port/static/media/About.9996d57f002acb1f5bdb.png",
-    "static/media/Chatapp.png": "/Kishor-Port/static/media/Chatapp.0e61076a091f06904cf9.png",
+    "static/media/contact_connection_vector.gif": "/Kishor-Port/static/media/contact_connection_vector.037851b9d59053b96057.gif",
+    "static/media/taskmanager_project_vector.gif": "/Kishor-Port/static/media/taskmanager_project_vector.0887459c54fb71f825c1.gif",
+    "static/media/ecommerce_project_vector.gif": "/Kishor-Port/static/media/ecommerce_project_vector.8935daa963268c69fda4.gif",
+    "static/media/chatapp_project_vector.gif": "/Kishor-Port/static/media/chatapp_project_vector.5775e3517a4b5d7f8e98.gif",
+    "static/media/backend_dev_hero.gif": "/Kishor-Port/static/media/backend_dev_hero.7b25a2dcd6cb6ebb800f.gif",
+    "static/media/about_me_vector.gif": "/Kishor-Port/static/media/about_me_vector.97d88a55bc853dd09941.gif",
+    "static/media/db_stack_tall.gif": "/Kishor-Port/static/media/db_stack_tall.1f422806a38b8dc47554.gif",
+    "static/media/api_gateway_wide.gif": "/Kishor-Port/static/media/api_gateway_wide.1ff9db104393be1f5327.gif",
+    "static/media/database_category_vector.gif": "/Kishor-Port/static/media/database_category_vector.b018eb0bfcfb6a74be74.gif",
+    "static/media/tools_category_vector.gif": "/Kishor-Port/static/media/tools_category_vector.99e4b61821d0746dc1de.gif",
+    "static/media/cloud_category_vector.gif": "/Kishor-Port/static/media/cloud_category_vector.ef3557c8b0a8086f7a62.gif",
     "index.html": "/Kishor-Port/index.html",
     "main.a463c17a.css.map": "/Kishor-Port/static/css/main.a463c17a.css.map",
-    "main.611a6040.js.map": "/Kishor-Port/static/js/main.611a6040.js.map"
+    "main.c48f92d7.js.map": "/Kishor-Port/static/js/main.c48f92d7.js.map"
   },
   "entrypoints": [
     "static/css/main.a463c17a.css",
-    "static/js/main.611a6040.js"
+    "static/js/main.c48f92d7.js"
   ]
 }

@@ -20,6 +20,7 @@ import {
 } from './HeroElements';
 import { useTheme } from '../../hooks/useTheme';
 import BackendDevHero from '../../images/backend_dev_hero.gif';
+import TerminalConsole from './TerminalConsole';
 
 function Hero() {
   const { theme } = useTheme();
@@ -157,6 +158,7 @@ function Hero() {
             />
           </HeroRight>
         </HeroContent>
+        <TerminalConsole />
       </div>
 
       {showScroll && (

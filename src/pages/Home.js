@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Hero from "../components/Hero/Hero";
 import Projects from "../components/Projects/Projects";
+import SystemBanner from "../components/shared/SystemBanner";
 import Experience from "../components/Experience/Experience";
 import Skills from "../components/Skills/Skills";
 import About from "../components/About/About";
@@ -22,6 +23,7 @@ function Home() {
       <Dropdown isOpen={isOpen} toggle={toggle} />
       <Hero />
       <Projects />
+      <SystemBanner />
       <Experience />
       <Skills />
       <About />

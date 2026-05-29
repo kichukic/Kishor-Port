@@ -2,9 +2,84 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import { motion } from 'framer-motion';
 
+export const ExperienceGrid = styled.div`
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 3rem;
+  align-items: start;
+  width: 100%;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+`;
+
+export const SidebarContainer = styled(motion.div)`
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 90px;
+
+  @media (max-width: 992px) {
+    position: relative;
+    top: 0;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+`;
+
+export const SidebarTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+`;
+
+export const SidebarGif = styled.img`
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+  margin-bottom: 1.5rem;
+  animation: floatReplica 6s ease-in-out infinite;
+
+  @keyframes floatReplica {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+`;
+
+export const LiveSyncCounter = styled.div`
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #00ff88;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+`;
+
+export const SyncLabel = styled.div`
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
 export const TimelineWrapper = styled.div`
   position: relative;
-  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
 
   &::before {
@@ -15,12 +90,7 @@ export const TimelineWrapper = styled.div`
     bottom: 0;
     width: 2px;
     background: ${({ theme }) => theme.gradient};
-    opacity: 0.5;
-
-    @media (min-width: 768px) {
-      left: 50%;
-      transform: translateX(-50%);
-    }
+    opacity: 0.4;
   }
 `;
 
@@ -28,17 +98,10 @@ export const TimelineItem = styled(motion.div)`
   position: relative;
   padding-left: 60px;
   padding-bottom: 3rem;
+  width: 100%;
 
   &:last-child {
     padding-bottom: 0;
-  }
-
-  @media (min-width: 768px) {
-    padding-left: 0;
-    width: 50%;
-    padding-right: ${({ side }) => (side === 'left' ? '3rem' : '0')};
-    padding-left: ${({ side }) => (side === 'right' ? '3rem' : '0')};
-    margin-left: ${({ side }) => (side === 'right' ? '50%' : '0')};
   }
 `;
 
@@ -65,12 +128,6 @@ export const Dot = styled.div`
   border: 3px solid #ffffff;
   z-index: 2;
   animation: ${glowRipple} 2.5s infinite ease-out;
-
-  @media (min-width: 768px) {
-    left: auto;
-    right: ${({ side }) => (side === 'left' ? '-9px' : 'auto')};
-    left: ${({ side }) => (side === 'right' ? '-9px' : 'auto')};
-  }
 `;
 
 export const Card = styled.div`
