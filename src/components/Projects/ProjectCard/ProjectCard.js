@@ -1,56 +1,73 @@
-import React from "react";
-import { ProjectList } from "../../../data/ProjectData";
+import React from 'react';
+import { FiGithub, FiExternalLink } from 'react-icons/fi';
+import { projectsData } from '../../../data/projects';
 import {
   Card,
   CardLeft,
   CardRight,
-  TechCardContainer,
-  TechCard,
+  ProjectTitle,
+  ProjectDesc,
+  TechStack,
+  TechTag,
   BtnGroup,
-} from "./ProjectCardElements";
-import ScrollAnimation from "react-animate-on-scroll";
+  Btn,
+} from './ProjectCardElements';
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: i * 0.1 },
+  }),
+};
+
 function ProjectCard() {
   return (
     <>
-      {ProjectList.map((list, index) => (
-        <ScrollAnimation animateIn="fadeInLeft" key={index}>
-          <Card>
-            <CardLeft>
-              <img src={list.img} alt={list.name} />
-            </CardLeft>
-            <CardRight>
-              <h4>{list.title}</h4>
-              <p>{list.description}</p>
-              <TechCardContainer>
-                {list.tech_stack.map((tech, index) => (
-                  <TechCard key={index}>{tech}</TechCard>
-                ))}
-              </TechCardContainer>
-              <BtnGroup>
-                {list.github_url.length > 0 && (
-                  <a
-                    className="btn SecondaryBtn btn-shadow"
-                    href={list.github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Github
-                  </a>
-                )}
-                {list.demo_url.length > 0 && (
-                  <a
-                    className="btn PrimaryBtn btn-shadow"
-                    href={list.demo_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Demo ➜
-                  </a>
-                )}
-              </BtnGroup>
-            </CardRight>
-          </Card>
-        </ScrollAnimation>
+      {projectsData.map((project, index) => (
+        <Card
+          key={project.id}
+          custom={index}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          variants={cardVariants}
+        >
+          <CardLeft>
+            <img src={project.img} alt={project.title} />
+          </CardLeft>
+          <CardRight>
+            <ProjectTitle>{project.title}</ProjectTitle>
+            <ProjectDesc>{project.description}</ProjectDesc>
+            <TechStack>
+              {project.tech_stack.map((tech) => (
+                <TechTag key={tech}>{tech}</TechTag>
+              ))}
+            </TechStack>
+            <BtnGroup>
+              {project.github_url && (
+                <Btn
+                  href={project.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  primary
+                >
+                  <FiGithub /> Code
+                </Btn>
+              )}
+              {project.demo_url && (
+                <Btn
+                  href={project.demo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FiExternalLink /> Live Demo
+                </Btn>
+              )}
+            </BtnGroup>
+          </CardRight>
+        </Card>
       ))}
     </>
   );

@@ -1,24 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import Hero from "../components/Hero/Hero";
 import Projects from "../components/Projects/Projects";
+import Experience from "../components/Experience/Experience";
+import Skills from "../components/Skills/Skills";
 import About from "../components/About/About";
+import Certification from "../components/certifications/certifications";
 import Contact from "../components/Contact/Contact";
 import Footer from "../components/Footer/Footer";
 import FixSocialIcon from "../components/SocialIcon/FixSocialIcon";
 import ScrollToTop from "../components/SocialIcon/ScrollToTop";
-import Certification from "../components/certifications/certifications";
+import Header from "../components/Header/Header";
+import Dropdown from "../components/Dropdown/Dropdown";
+
 function Home() {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = () => setIsOpen(!isOpen);
+
   return (
     <>
+      <Header toggle={toggle} />
+      <Dropdown isOpen={isOpen} toggle={toggle} />
       <Hero />
       <Projects />
+      <Experience />
+      <Skills />
       <About />
-      <Certification/>
+      <Certification />
       <Contact />
       <FixSocialIcon />
-      <Footer />
       <ScrollToTop />
-    
+      <Footer />
     </>
   );
 }

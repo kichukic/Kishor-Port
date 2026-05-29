@@ -1,127 +1,181 @@
-import styled, { keyframes } from "styled-components";
-import { Link as LinkScroll } from "react-scroll";
+import styled from '@emotion/styled';
+import { Link as LinkScroll } from 'react-scroll';
+import { motion } from 'framer-motion';
 
-export const HeroContainer = styled.div`
-  padding-bottom: 2rem;
-  padding-top: 4rem;
-  padding-right: 1rem;
-  padding-left: 1rem;
-  margin-right: auto;
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-
-  @media (min-width: 576px) {
-    max-width: 540px;
-  }
-  @media (min-width: 768px) {
-    max-width: 720px;
-  }
-  @media (min-width: 992px) {
-    max-width: 960px;
-  }
-  @media (min-width: 1200px) {
-    max-width: 1000px;
-  }
-`;
-
-export const HeroWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-
-  @media screen and (max-width: 992px) {
-    flex-direction: column;
-  }
-`;
-
-export const HeroLeft = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  text-align: left;
-  flex: 1;
-
-  h1 {
-    font-size: 2.8rem;
-    color: #f6f6f6;
-    opacity: 0.98;
-    font-weight: 400;
-  }
-
-  h5 {
-    font-size: 1.6rem;
-    color: rgb(119, 119, 121);
-    margin-bottom: 1rem;
-    font-weight: 400;
-  }
-
-  p {
-    font-size: 17px;
-    color: #f6f6f6;
-    opacity: 0.85;
-  }
-
-  @media screen and (max-width: 992px) {
-    text-align: center;
-    align-items: center;
-    margin-bottom: 2rem;
-
-    h5 {
-      min-height: 5rem;
-  }
-`;
-
-export const HeroRight = styled.div`
-  flex: 1;
-  justify-content: center;
-  display: flex;
-`;
-
-export const Image = styled.img`
-  height: 230px;
-  width: auto;
-`;
-
-const ScrollAnimation = keyframes`
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-20px);
-  }
-  60% {
-    transform: translateY(-10px);
-  }
-`;
-
-export const ScrollDown = styled(LinkScroll)`
-  display: flex;
-  justify-content: flex-start;
-  cursor: pointer;
-  position: absolute;
-
-  animation: ${ScrollAnimation} 2s linear 0s infinite;
-  @media screen and (max-width: 992px) {
-    position: relative;
-    justify-content: center;
-    margin-top: 2rem;
-  }
-`;
-
-export const ScrollLink = styled.div`
+export const HeroSection = styled.section`
+  min-height: 100vh;
   display: flex;
   align-items: center;
-  font-size: 1.3rem;
-  color: #f6f6f6;
+  position: relative;
+  z-index: 1;
+  padding-top: 70px;
+  overflow: hidden;
+`;
 
-  img {
-    height: 35px;
-    width: 35px;
-    margin-left: 6px;
+export const HeroContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  width: 100%;
+
+  @media (max-width: 992px) {
+    flex-direction: column-reverse;
+    text-align: center;
+    gap: 2rem;
   }
+`;
+
+export const HeroLeft = styled(motion.div)`
+  flex: 1.2;
+`;
+
+export const HeroRight = styled(motion.div)`
+  flex: 0.8;
+  display: flex;
+  justify-content: center;
+`;
+
+export const Greeting = styled(motion.span)`
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  display: block;
+  letter-spacing: 1px;
+`;
+
+export const Name = styled(motion.h1)`
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+
+  .highlight {
+    background: ${({ theme }) => theme.gradientText};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+`;
+
+export const Subtitle = styled(motion.div)`
+  font-size: 1.4rem;
+  color: ${({ theme }) => theme.textSecondary};
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  min-height: 2rem;
+
+  .typing {
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+`;
+
+export const Description = styled(motion.p)`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.textMuted};
+  max-width: 540px;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+
+  @media (max-width: 992px) {
+    margin: 0 auto 2rem;
+  }
+`;
+
+export const HeroButtons = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 992px) {
+    justify-content: center;
+  }
+`;
+
+export const PrimaryBtn = styled.a`
+  padding: 0.75rem 2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.gradient};
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
+`;
+
+export const SecondaryBtn = styled.a`
+  padding: 0.75rem 2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: transparent;
+  color: ${({ theme }) => theme.neon};
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid ${({ theme }) => theme.neon};
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background: ${({ theme }) => theme.tagBg};
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
+`;
+
+export const HeroImage = styled(motion.img)`
+  width: 440px;
+  height: auto;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.15));
+
+  @media (max-width: 768px) {
+    width: 290px;
+  }
+`;
+
+export const ScrollIndicator = styled(motion.div)`
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${({ theme }) => theme.textMuted};
+  font-size: 0.8rem;
+  cursor: pointer;
+`;
+
+export const ScrollDot = styled(motion.div)`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.neon};
+`;
+
+export const FloatingShape = styled(motion.div)`
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid ${({ theme }) => theme.neon};
+  opacity: 0.15;
+  pointer-events: none;
 `;

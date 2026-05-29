@@ -1,90 +1,80 @@
-import React, { useEffect } from "react";
-import { stackList } from "../../data/ProjectData";
-import "./style.css"
-
-
-
-
+import React, { useEffect } from 'react';
+import SectionWrapper from '../shared/SectionWrapper';
 import {
-  Image,
-  Technologies,
-  Tech,
-  TechImg,
-  TechName,
-  ContactWrapper,
-} from "./certificationelements";
-import ScrollAnimation from "react-animate-on-scroll";
-import Abouts from "../../images/About.png";
+  CertsGrid,
+  CertCard,
+  CertTitle,
+  CertIssuer,
+  CertImage,
+  CertLink,
+} from './certificationelements';
+import './style.css';
 
 function Certification() {
   useEffect(() => {
-    // Dynamically add the stylesheet for the TestDome certificate
-    const stylesheet = "https://www.testdome.com/content/certificates/embed.css";
-    const link = document.createElement("link");
-    link.href = stylesheet;
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    link.media = "screen,print";
-    document.getElementsByTagName("head")[0].appendChild(link);
+    const link = document.createElement('link');
+    link.href = 'https://www.testdome.com/content/certificates/embed.css';
+    link.type = 'text/css';
+    link.rel = 'stylesheet';
+    link.media = 'screen,print';
+    document.head.appendChild(link);
   }, []);
 
+  const certs = [
+    {
+      title: 'JavaScript & Node.js',
+      issuer: 'TestDome',
+      image: '',
+      link: 'https://www.testdome.com/certificates/c5787b627ec24062819a4b56b15389c8',
+      isEmbed: true,
+    },
+    {
+      title: 'Node.js',
+      issuer: 'Programming Hub',
+      image: 'https://storage.googleapis.com/programminghub/certificate%2F1731939730616.jpg',
+      link: 'https://storage.googleapis.com/programminghub/certificate%2F1731939730616.jpg',
+      isEmbed: false,
+    },
+  ];
+
   return (
-    <ContactWrapper id="about">
-      <div className="Container">
-        <div className="SectionTitle">Certifications</div>
-        <div className="BigCard">
-          <ScrollAnimation animateIn="fadeInLeft">
-            <Image src={Abouts} />
-          </ScrollAnimation>
+    <SectionWrapper id="certifications" title="Certifications">
+      <CertsGrid>
+        {certs.map((cert, index) => (
+          <CertCard
+            key={index}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
+          >
+            <CertTitle>{cert.title}</CertTitle>
+            <CertIssuer>{cert.issuer}</CertIssuer>
 
-          <div className="AboutBio">
-            <ScrollAnimation animateIn="slideInRight">
-              <div className="tagline2">
-             <div className="title">
-             JavaScript and Node.js Certification – TestDome
-             </div>
-
-Demonstrates proficiency in JavaScript and Node.js concepts, verified through practical testing by TestDome.
+            {cert.isEmbed ? (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
+                <a
+                  href={cert.link}
+                  className="testdome-certificate-stamp silver large-certification"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="testdome-certificate-name">Kishor TH</span>
+                  <span className="testdome-certificate-test-name">JavaScript and Node.js</span>
+                  <span className="testdome-certificate-card-logo">TestDome<br />Certificate</span>
+                </a>
               </div>
-            </ScrollAnimation>
-          </div>
-<div className="test">
-      {/* TestDome Certificate Embed */}
-     <ScrollAnimation animateIn="slideInLeft">
+            ) : (
+              <CertImage src={cert.image} alt={cert.title} />
+            )}
 
-     <a
-            href="https://www.testdome.com/certificates/c5787b627ec24062819a4b56b15389c8"
-            className="testdome-certificate-stamp silver large-certification"
-          >
-            <span className="testdome-certificate-name">Kishor TH</span>
-            <span className="testdome-certificate-test-name">JavaScript and Node.js</span>
-            <span className="testdome-certificate-card-logo">
-              TestDome<br />Certificate
-            </span>
-          </a>   
-     </ScrollAnimation>
-
-         <ScrollAnimation animateIn="slideInRight">
-         <a
-            href="https://storage.googleapis.com/programminghub/certificate%2F1731939730616.jpg"
-            className="testdome-certificate-stamp silver large-certification"
-          >
-            <span className="testdome-certificate-name">Kishor TH</span>
-            <span className="testdome-certificate-test-name"> Node.js</span>
-            <img
-      src="https://storage.googleapis.com/programminghub/certificate%2F1731939730616.jpg"
-      alt="JavaScript and Node.js Certification"
-      className="certificate-image"
-    />
-            <span className="testdome-certificate-card-logo">
-              Programming Hub<br />Certificate
-            </span>
-          </a>   
-         </ScrollAnimation>
-</div>
-        </div>
-      </div>
-    </ContactWrapper>
+            <CertLink href={cert.link} target="_blank" rel="noopener noreferrer">
+              View Certificate
+            </CertLink>
+          </CertCard>
+        ))}
+      </CertsGrid>
+    </SectionWrapper>
   );
 }
 

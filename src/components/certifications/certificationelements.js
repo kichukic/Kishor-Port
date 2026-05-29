@@ -1,40 +1,66 @@
-import styled from "@emotion/styled";
+import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 
-export const ContactWrapper = styled.div`
-  margin-top: 5rem;
-`;
-
-export const Image = styled.img`
-  max-width: 120px;
+export const CertsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 800px;
   margin: 0 auto;
+`;
+
+export const CertCard = styled(motion.div)`
+  background: ${({ theme }) => theme.cardBg};
+  border: 1px solid ${({ theme }) => theme.cardBorder};
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.neonSecondary};
+    box-shadow: ${({ theme }) => theme.shadowSecondary};
+    transform: translateY(-4px);
+  }
+`;
+
+export const CertTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  margin-bottom: 0.5rem;
+`;
+
+export const CertIssuer = styled.p`
+  font-size: 0.85rem;
+  color: #ffffff;
   margin-bottom: 1rem;
+  font-weight: 500;
 `;
 
-export const Technologies = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: left;
-  margin-right: auto;
-  margin-left: auto;
-  margin-bottom: -2rem;
+export const CertImage = styled.img`
+  width: 100%;
+  max-width: 250px;
+  border-radius: 12px;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 `;
 
-export const Tech = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-  max-width: 100px;
-  min-width: 100px;
-  margin-bottom: 2rem;
-`;
+export const CertLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: ${({ theme }) => theme.gradient};
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
 
-export const TechImg = styled.img`
-  height: 40px;
-  width: 40px;
-  padding-bottom: 5px;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadowSecondary};
+  }
 `;
-
-export const TechName = styled.div`
-  font-size: 14px;
-`;
-

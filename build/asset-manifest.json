@@ -1,16 +1,17 @@
 {
   "files": {
-    "main.css": "/Kishor-Port/static/css/main.20bd8896.css",
-    "main.js": "/Kishor-Port/static/js/main.851e0ea4.js",
+    "main.css": "/Kishor-Port/static/css/main.a463c17a.css",
+    "main.js": "/Kishor-Port/static/js/main.611a6040.js",
+    "static/media/matrix-digital-moewalls-com.mp4": "/Kishor-Port/static/media/matrix-digital-moewalls-com.c8a0d360fec13e91f089.mp4",
+    "static/media/black-hole-gargantua-moewalls-com.mp4": "/Kishor-Port/static/media/black-hole-gargantua-moewalls-com.adc48bbf71ee0d2e1a72.mp4",
     "static/media/About.png": "/Kishor-Port/static/media/About.9996d57f002acb1f5bdb.png",
     "static/media/Chatapp.png": "/Kishor-Port/static/media/Chatapp.0e61076a091f06904cf9.png",
     "index.html": "/Kishor-Port/index.html",
-    "static/media/blob-haikei.svg": "/Kishor-Port/static/media/blob-haikei.ed4231cd548cd312fe4f.svg",
-    "main.20bd8896.css.map": "/Kishor-Port/static/css/main.20bd8896.css.map",
-    "main.851e0ea4.js.map": "/Kishor-Port/static/js/main.851e0ea4.js.map"
+    "main.a463c17a.css.map": "/Kishor-Port/static/css/main.a463c17a.css.map",
+    "main.611a6040.js.map": "/Kishor-Port/static/js/main.611a6040.js.map"
   },
   "entrypoints": [
-    "static/css/main.20bd8896.css",
-    "static/js/main.851e0ea4.js"
+    "static/css/main.a463c17a.css",
+    "static/js/main.611a6040.js"
   ]
 }

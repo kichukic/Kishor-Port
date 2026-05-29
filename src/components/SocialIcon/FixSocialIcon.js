@@ -1,82 +1,69 @@
-import React from "react";
-import { FaLinkedin, FaGithub } from "react-icons/fa";
-import styled from "@emotion/styled";
-import ScrollAnimation from "react-animate-on-scroll";
+import React from 'react';
+import { FiGithub, FiLinkedin } from 'react-icons/fi';
+import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 
-const SocialContainer = styled.div`
+const SocialBar = styled(motion.div)`
   position: fixed;
-  top: 48%;
   left: 1.5rem;
-  transform: translateY(-50%);
+  bottom: 50%;
+  transform: translateY(50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 
-  ul {
-    display: block;
-  }
-
-  .item + .item {
-    margin-top: 1rem;
-  }
-
-  a {
-    font-size: 2.3rem;
-    color: rgb(119, 119, 121);
-    &:hover {
-      color: rgb(57, 134, 250);
-    }
-  }
-
-  @media screen and (max-width: 1000px) {
-    margin-top: 2rem;
-    position: relative;
-    top: 0;
-    left: 0;
-    ul {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      list-style: none;
-    }
-
-    a {
-      font-size: 2.5rem;
-      color: #151418;
-      &:hover {
-        color: rgb(57, 134, 250);
-      }
-    }
-
-    .item + .item {
-      margin-top: 0;
-      margin-left: 2rem;
-    }
+  @media (max-width: 1000px) {
+    display: none;
   }
 `;
+
+const SocialItem = styled.a`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.glassBg};
+  border: 1px solid ${({ theme }) => theme.glassBorder};
+  backdrop-filter: ${({ theme }) => theme.backdrop};
+  color: ${({ theme }) => theme.textSecondary};
+  font-size: 1.2rem;
+  transition: all 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.neon};
+    border-color: ${({ theme }) => theme.neon};
+    box-shadow: ${({ theme }) => theme.shadow};
+    transform: translateX(4px);
+  }
+`;
+
 function FixSocialIcon() {
   return (
-    <SocialContainer>
-      <ScrollAnimation animateIn="fadeIn" animateOnce={true}>
-        <ul>
-          <li className="item">
-            <a
-              href="https://www.linkedin.com/in/kishor-th-6a257a107/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FaLinkedin />
-            </a>
-          </li>
-          <li className="item">
-            <a
-              href="https://github.com/kichukic"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FaGithub />
-            </a>
-          </li>
-        </ul>
-      </ScrollAnimation>
-    </SocialContainer>
+    <SocialBar
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 1, duration: 0.5 }}
+    >
+      <SocialItem
+        href="https://github.com/kichukic"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub"
+      >
+        <FiGithub />
+      </SocialItem>
+      <SocialItem
+        href="https://www.linkedin.com/in/kishor-th-6a257a107/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="LinkedIn"
+      >
+        <FiLinkedin />
+      </SocialItem>
+    </SocialBar>
   );
 }
 

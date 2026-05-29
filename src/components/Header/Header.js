@@ -1,41 +1,57 @@
-import React from "react";
-import { Nav, Logo, NavLink, Bars, NavMenu, NavBtn } from "./HeaderElements";
-import Logos from "../../images/About.png"
+import React, { useState, useEffect } from 'react';
+import {
+  Nav,
+  NavInner,
+  Logo,
+  NavMenu,
+  NavLink,
+  NavActions,
+  ResumeBtn,
+  MobileMenuBtn,
+} from './HeaderElements';
 
 const Header = ({ toggle }) => {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div className="Container" style={{padding: 0}}>
-      <Nav>
-        <Logo to="/">
-          <img
-            src={Logos}
-            alt="logo"
-          />
-        </Logo>
+    <Nav scrolled={scrolled ? 1 : 0}>
+      <NavInner>
+        <Logo>Kishor.TH</Logo>
         <NavMenu>
-          <NavLink className="menu-item" to="projects">
+          <NavLink to="projects" smooth spy offset={-70} duration={500}>
             Projects
           </NavLink>
-          <NavLink className="menu-item" to="about">
+          <NavLink to="experience" smooth spy offset={-70} duration={500}>
+            Experience
+          </NavLink>
+          <NavLink to="skills" smooth spy offset={-70} duration={500}>
+            Skills
+          </NavLink>
+          <NavLink to="about" smooth spy offset={-70} duration={500}>
             About
           </NavLink>
-          <NavLink className="menu-item" to="contact">
+          <NavLink to="contact" smooth spy offset={-70} duration={500}>
             Contact
           </NavLink>
         </NavMenu>
-        <NavBtn>
-          <a
-            className="btn PrimaryBtn"
+        <NavActions>
+          <ResumeBtn
             href="https://www.linkedin.com/in/kishor-th-6a257a107/"
             target="_blank"
             rel="noopener noreferrer"
           >
             Resume
-          </a>
-        </NavBtn>
-        <Bars onClick={toggle} />
-      </Nav>
-    </div>
+          </ResumeBtn>
+          <MobileMenuBtn onClick={toggle} />
+        </NavActions>
+      </NavInner>
+    </Nav>
   );
 };
 

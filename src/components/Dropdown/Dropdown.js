@@ -1,14 +1,14 @@
-import React from "react";
-import { FaTimes } from "react-icons/fa";
-import styled from "@emotion/styled";
-import { Link as ScrollLink } from "react-scroll";
+import React from 'react';
+import styled from '@emotion/styled';
+import { Link as ScrollLink } from 'react-scroll';
+import { FaTimes } from 'react-icons/fa';
+import { useTheme } from '../../hooks/useTheme';
 
-const SiderBar = styled.div`
-  background: #151418;
+const Sidebar = styled.div`
+  background: ${({ theme }) => theme.body};
   position: fixed;
   height: 100%;
   width: 100%;
-  /* top: 0; */
   left: 0;
   z-index: 999;
   transition: 0.3s ease-in-out;
@@ -16,84 +16,90 @@ const SiderBar = styled.div`
   justify-content: center;
   flex-direction: column;
   align-items: center;
-  opacity: ${({ isOpen }) => (isOpen ? "100%" : "0")};
-  top: ${({ isOpen }) => (isOpen ? "0" : "-100%")};
+  opacity: ${({ isOpen }) => (isOpen ? '1' : '0')};
+  top: ${({ isOpen }) => (isOpen ? '0' : '-100%')};
+  pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
 `;
 
 const CloseIcon = styled(FaTimes)`
-  font-size: 2rem;
-  color: #fff;
+  font-size: 1.8rem;
+  color: ${({ theme }) => theme.text};
   position: absolute;
-  right: 2rem;
-  top: 2rem;
+  right: 1.5rem;
+  top: 1.5rem;
   cursor: pointer;
 `;
-export const NavMenu = styled.div`
+
+const NavMenu = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
-
-  .menu-item + .menu-item {
-    margin-top: 2rem;
-  }
+  align-items: center;
+  gap: 2rem;
 `;
 
-export const NavLink = styled(ScrollLink)`
-  color: #fff;
+const NavLink = styled(ScrollLink)`
+  color: ${({ theme }) => theme.text};
+  font-size: 1.5rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1.7rem;
+  transition: color 0.2s;
 
   &:hover {
-    color: rgb(119, 119, 121);
+    color: ${({ theme }) => theme.neon};
   }
 `;
 
-export const NavBtn = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 5rem;
-  font-size: 1.7rem;
+const ResumeBtn = styled.a`
+  margin-top: 3rem;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.gradient};
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
 `;
 
 function Dropdown({ isOpen, toggle }) {
+  const { theme } = useTheme();
+
+  const links = [
+    { to: 'projects', label: 'Projects' },
+    { to: 'experience', label: 'Experience' },
+    { to: 'skills', label: 'Skills' },
+    { to: 'about', label: 'About' },
+    { to: 'contact', label: 'Contact' },
+  ];
+
   return (
-    <SiderBar isOpen={isOpen} onClick={toggle}>
+    <Sidebar isOpen={isOpen} theme={theme} onClick={toggle}>
       <CloseIcon onClick={toggle} />
       <NavMenu>
-        <NavLink
-          onClick={toggle}
-          className="menu-item"
-          to="projects"
-        >
-          Projects
-        </NavLink>
-        <NavLink
-          onClick={toggle}
-          className="menu-item"
-          to="about"
-        >
-          About
-        </NavLink>
-        <NavLink
-          onClick={toggle}
-          className="menu-item"
-          to="contact"
-        >
-          Contact
-        </NavLink>
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            onClick={toggle}
+            to={link.to}
+            smooth
+            spy
+            offset={-70}
+            duration={500}
+          >
+            {link.label}
+          </NavLink>
+        ))}
       </NavMenu>
-      <NavBtn onClick={toggle}>
-        <a
-          className="btn PrimaryBtn"
-          href="https://www.linkedin.com/in/kishor-th-6a257a107/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Resume
-        </a>
-      </NavBtn>
-    </SiderBar>
+      <ResumeBtn
+        href="https://www.linkedin.com/in/kishor-th-6a257a107/"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={toggle}
+      >
+        Resume
+      </ResumeBtn>
+    </Sidebar>
   );
 }
 

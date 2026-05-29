@@ -1,62 +1,89 @@
-import React, { useState } from "react";
-import { ContactWrapper, Email } from "./ContactElements";
-import { MdContentCopy } from "react-icons/md";
-import { IconButton, Tooltip } from "@mui/material";
-import Zoom from '@mui/material/Zoom';
+import React, { useState } from 'react';
+import { FiMail, FiMapPin, FiGithub, FiLinkedin } from 'react-icons/fi';
+import { MdContentCopy } from 'react-icons/md';
+import { IconButton, Tooltip, Zoom } from '@mui/material';
+import SectionWrapper from '../shared/SectionWrapper';
+import {
+  ContactGrid,
+  ContactInfo,
+  InfoTitle,
+  InfoText,
+  InfoItem,
+  SocialRow,
+  SocialLink,
+} from './ContactElements';
 
-import ScrollAnimation from "react-animate-on-scroll";
 function Contact() {
   const [showTooltip, setShowTooltip] = useState(false);
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText("kishor.th@hotmail.com");
+
+  const copyEmail = () => {
+    navigator.clipboard.writeText('kishor.th@hotmail.com');
     setShowTooltip(true);
-    setTimeout(() => {
-      setShowTooltip(false);
-    }, 700);
+    setTimeout(() => setShowTooltip(false), 700);
   };
 
   return (
-    <ContactWrapper id="contact">
+    <SectionWrapper id="contact" title="Get In Touch">
+      <ContactGrid>
+        <ContactInfo
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <InfoTitle>Let's work together</InfoTitle>
+          <InfoText>
+            I'm always open to discussing new projects, creative ideas, or
+            opportunities to be part of your vision. Feel free to reach out!
+          </InfoText>
 
-      <div className="Container">
-        <div className="SectionTitle">Get In Touch</div>
-        <ScrollAnimation animateIn="fadeIn" >
-          <div className="BigCard">
-            <Email>
-              <div style={{ display: 'flex', alignItems: 'center', columnGap: '20px', rowGap: '10px', flexWrap: 'wrap', justifyContent: 'center' }} >
-                <span>kishor.th@hotmail.com</span>
-                <Tooltip
-                  PopperProps={{
-                    disablePortal: true,
-                  }}
-                  open={showTooltip}
-                  onClose={() => setShowTooltip(false)}
-                  title="Copied!"
-                  TransitionComponent={Zoom}
-                  disableFocusListener
-                  disableHoverListener
-                  disableTouchListener
-                  placement="bottom"
-                >
-                  <IconButton  onClick={copyToClipboard} >
-                    <MdContentCopy size={25} style={{ cursor: 'pointer', color: "#d4d4da" }}/>
-                  </IconButton>
-                </Tooltip>
-              </div>
-              <a
-                className="btn PrimaryBtn btn-shadow"
-                href="mailto:kishor.th@hotmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
+          <InfoItem>
+            <FiMail />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              kishor.th@hotmail.com
+              <Tooltip
+                PopperProps={{ disablePortal: true }}
+                open={showTooltip}
+                title="Copied!"
+                TransitionComponent={Zoom}
+                disableFocusListener
+                disableHoverListener
+                disableTouchListener
+                placement="top"
               >
-                Send Email
-              </a>
-            </Email>
-          </div>
-        </ScrollAnimation>
+                <IconButton onClick={copyEmail} size="small" sx={{ color: 'inherit' }}>
+                  <MdContentCopy size={16} />
+                </IconButton>
+              </Tooltip>
+            </span>
+          </InfoItem>
 
-      </div>
-    </ContactWrapper>
+          <InfoItem>
+            <FiMapPin />
+            <span>Remote / Worldwide</span>
+          </InfoItem>
+
+          <SocialRow>
+            <SocialLink
+              href="https://github.com/kichukic"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+            >
+              <FiGithub />
+            </SocialLink>
+            <SocialLink
+              href="https://www.linkedin.com/in/kishor-th-6a257a107/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+            >
+              <FiLinkedin />
+            </SocialLink>
+          </SocialRow>
+        </ContactInfo>
+      </ContactGrid>
+    </SectionWrapper>
   );
 }
 

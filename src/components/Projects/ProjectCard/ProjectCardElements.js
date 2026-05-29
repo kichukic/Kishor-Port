@@ -1,27 +1,48 @@
-import styled from "@emotion/styled";
+import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
+import { motion } from 'framer-motion';
 
-export const Card = styled.div`
+export const Card = styled(motion.div)`
   display: grid;
-  grid-gap: 1rem;
-  margin-bottom: 4rem;
-  grid-template-columns: 1fr;
-  padding-bottom: 2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: ${({ theme }) => theme.cardBg};
+  border: 1px solid ${({ theme }) => theme.cardBorder};
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
   overflow: hidden;
-  border-radius: 50px;
-  box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  @media (min-width: 992px) {
-    grid-template-columns: 1fr 1fr;
-    border-bottom: 0;
-    padding-bottom: 0;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.neon};
+    box-shadow: ${({ theme }) => theme.shadow};
+    transform: translateY(-4px);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 `;
 
+const float = keyframes`
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+`;
+
 export const CardLeft = styled.div`
-  justify-self: center;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   img {
-    object-fit: cover;
+    width: 100%;
+    max-width: 350px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.08));
+    animation: ${float} 6s ease-in-out infinite;
   }
 `;
 
@@ -29,57 +50,64 @@ export const CardRight = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+`;
 
-  h4 {
-    font-size: 1.5rem;
-    font-weight: 400;
-  }
+export const ProjectTitle = styled.h3`
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  margin-bottom: 0.75rem;
+`;
 
-  p {
-    font-weight: 400;
-    max-width: 100%;
-    margin-top: 1px;
-    margin-bottom: 1rem;
-    color: #ffffff;
-    text-align: center;
+export const ProjectDesc = styled.p`
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.textSecondary};
+  line-height: 1.7;
+  margin-bottom: 1rem;
+`;
 
-    @media (min-width: 992px) {
-      text-align: start;
-    }
-  }
-  @media (min-width: 992px) {
-    align-items: flex-start;
-    margin-top: 0rem;
-  }
+export const TechStack = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+`;
+
+export const TechTag = styled.span`
+  padding: 0.3rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.tagBg};
+  color: ${({ theme }) => theme.tagText};
+  border: 1px solid ${({ theme }) => theme.glow};
 `;
 
 export const BtnGroup = styled.div`
-  height: 80px;
   display: flex;
-  align-items: center;
-`;
-
-export const TechCardContainer = styled.div`
-  display: flex;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  justify-content: center;
-  @media (min-width: 992px) {
-    justify-content: flex-start;
-  }
 `;
 
-export const TechCard = styled.div`
-  border-radius: 40px;
-  background-color: #d4d4da;
-  padding: 5px 10px;
-  margin: 5px;
-  display: flex;
+export const Btn = styled.a`
+  padding: 0.6rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 400;
-  color: #000;
-  cursor: default;
-  box-shadow: 0px 2px 5px rgba(160, 170, 180, 0.6);
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${({ primary, theme }) =>
+    primary ? theme.gradient : 'transparent'};
+  color: ${({ primary }) => (primary ? '#fff' : 'inherit')};
+  border: ${({ primary, theme }) =>
+    primary ? 'none' : `1px solid ${theme.neon}`};
+  color: ${({ primary, theme }) => (primary ? '#fff' : theme.neon)};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
 `;

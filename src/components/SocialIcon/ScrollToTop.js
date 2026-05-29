@@ -1,49 +1,46 @@
-import { IconButton, Tooltip, styled } from '@mui/material'
-import React, { useState, useEffect } from 'react'
-import { MdKeyboardArrowUp } from 'react-icons/md';
-import { animateScroll as scroll } from 'react-scroll';
+import React, { useState, useEffect } from 'react';
+import { IconButton, Tooltip, styled } from '@mui/material';
+import { FiArrowUp } from 'react-icons/fi';
+import { animateScroll } from 'react-scroll';
 
-const StyledIconButton = styled(IconButton)`
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    color: white;
-    padding: 10px;
-`
+const StyledButton = styled(IconButton)`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  background: ${({ theme }) => theme.gradient};
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
 
-const StyledArrowIcon = styled(MdKeyboardArrowUp)`
-    background-color: #007bff;
-    border-radius: 50%;
-    padding: 5px;
-    box-shadow: 0px 4px 20px rgba(160, 170, 180, 0.6);
-`
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  }
+`;
 
 function ScrollToTop() {
-    const [open, setOpen] = React.useState(false);
-    const [shouldRender, setShouldRender] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-    const handleClick = () => {
-        setOpen(false);
-        scroll.scrollToTop({ duration: 0 });
-    };
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 500);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-    useEffect(() => {
-        const handleScroll = () => {
-            const scrollThreshold = 500;
-            if (window.scrollY > scrollThreshold) setShouldRender(true)
-            else setShouldRender(false);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-    }, []);
+  const scrollUp = () => {
+    animateScroll.scrollToTop({ duration: 400 });
+  };
 
-    return (
-        shouldRender &&
-        <Tooltip title='Scroll to top' placement='top' open={open} onOpen={() => setOpen(true)} onClose={() => setOpen(false)}>
-            <StyledIconButton size='large' aria-label='scroll to top' onClick={handleClick} >
-                <StyledArrowIcon fontSize={40} />
-            </StyledIconButton>
-        </Tooltip>
-    )
+  return visible ? (
+    <Tooltip title="Scroll to top" placement="left">
+      <StyledButton onClick={scrollUp} aria-label="Scroll to top">
+        <FiArrowUp size={22} />
+      </StyledButton>
+    </Tooltip>
+  ) : null;
 }
 
-export default ScrollToTop
+export default ScrollToTop;

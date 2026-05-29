@@ -1,67 +1,108 @@
-import React from "react";
-import { stackList } from "../../data/ProjectData";
+import React from 'react';
+import SectionWrapper from '../shared/SectionWrapper';
 import {
-  Image,
-  Technologies,
-  Tech,
-  TechImg,
-  TechName,
-  ContactWrapper,
-} from "./AboutElements";
-import ScrollAnimation from "react-animate-on-scroll";
-import Abouts from "../../images/About.png"
-
-
+  AboutContent,
+  AboutLeft,
+  ProfileImage,
+  AboutRight,
+  Bio,
+  StatsRow,
+  StatCard,
+  StatNumber,
+  StatLabel,
+} from './AboutElements';
+import Abouts from '../../images/about_me_vector.gif';
 
 function About() {
   return (
-    <ContactWrapper id="about">
-      <div className="Container">
-        <div className="SectionTitle">About Me</div>
-        <div className="BigCard">
-        <ScrollAnimation animateIn="fadeInLeft">
-   <Image
-      src= {Abouts}
-     // alt="Full Stack Developer Icon"
-   />
-</ScrollAnimation>
+    <SectionWrapper id="about" title="About Me">
+      <AboutContent>
+        <AboutLeft
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <ProfileImage
+            src={Abouts}
+            alt="Kishor TH"
+            animate={{
+              y: [0, -12, 0],
+            }}
+            transition={{
+              y: {
+                duration: 5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              },
+            }}
+            whileHover={{ scale: 1.05 }}
+          />
+        </AboutLeft>
 
-          <div className="AboutBio">
-            <ScrollAnimation animateIn="slideInRight">
-            Hello! My name is <strong>Kishor TH</strong>. With over 3 years of experience as a Node.js developer, I specialize in building scalable and efficient backend systems. My expertise lies in crafting robust APIs with Node.js and Express, alongside solid database management skills with MongoDB and MySQL. From designing architecture to optimizing performance, I’m dedicated to delivering reliable solutions that support high-traffic applications.
-            </ScrollAnimation>
+        <AboutRight
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Bio>
+            Dynamic <strong>Node.js developer</strong> with 3 years of experience in
+            building scalable, efficient backend solutions. Expertise in{' '}
+            <strong>Node.js</strong>, <strong>Express.js</strong>,{' '}
+            <strong>MongoDB</strong>, and <strong>MySQL</strong>, along with cloud
+            proficiency in <strong>AWS</strong> and <strong>GCP</strong>.
+          </Bio>
+          <Bio>
+            Currently leading backend development for <strong>Zolio</strong>, an AI-driven
+            interview platform at Tamcherry Technologies — integrating LLM APIs
+            (OpenAI/Gemini), managing AWS infrastructure, and implementing Redis
+            caching for low-latency performance. Previously built{' '}
+            <strong>Envitus</strong>, a scalable IoT air quality monitoring suite,
+            with full CI/CD pipelines and cloud deployment.
+          </Bio>
+          <Bio>
+            Skilled in Linux environments with strong problem-solving abilities
+            and a passion for continuous learning. Proficient in{' '}
+            <strong>English</strong>, <strong>Malayalam</strong>, and{' '}
+            <strong>Hindi</strong>.
+          </Bio>
 
-            <br /><br />
-            
-            <ScrollAnimation animateIn="fadeInLeft">
-            I have hands-on experience with cloud deployment on both AWS and GCP, ensuring seamless and secure deployments that meet scalability demands. Working in Linux environments has further honed my technical skills, and I prioritize automation and CI/CD practices, leveraging tools like GitHub Actions to streamline development and deployment processes.
-                       </ScrollAnimation>
-
-            <br /><br />
-
-            <ScrollAnimation animateIn="slideInRight">
-            Beyond technical skills, I’m a continuous learner with a passion for problem-solving and innovation. I thrive on challenges that push me to grow and keep up with the latest in backend technologies. Whether working independently or within a collaborative team, I’m committed to creating impactful solutions that meet user and business needs effectively.
-                           <div className="tagline2">
-                I have become confident using the following technologies:
-              </div>
-            </ScrollAnimation>
-            
-
-            <Technologies>
-              {stackList.map((stack, index) => (
-                <ScrollAnimation animateIn="fadeInLeft" key={index}>
-                  <Tech key={index} className="tech">
-                    <TechImg src={stack.img} alt={stack.name} />
-                    <TechName>{stack.name}</TechName>
-                  </Tech>
-                </ScrollAnimation>
-              ))}
-            </Technologies>
-          </div>
-
-        </div>
-      </div>
-    </ContactWrapper>
+          <StatsRow>
+            <StatCard
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <StatNumber>3+</StatNumber>
+              <StatLabel>Years Experience</StatLabel>
+            </StatCard>
+            <StatCard
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <StatNumber>10+</StatNumber>
+              <StatLabel>Projects</StatLabel>
+            </StatCard>
+            <StatCard
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <StatNumber>15+</StatNumber>
+              <StatLabel>Technologies</StatLabel>
+            </StatCard>
+          </StatsRow>
+        </AboutRight>
+      </AboutContent>
+    </SectionWrapper>
   );
 }
 
