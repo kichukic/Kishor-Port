@@ -14,9 +14,6 @@ import {
   PrimaryBtn,
   SecondaryBtn,
   HeroImage,
-  ScrollIndicator,
-  ScrollDot,
-  FloatingShape,
 } from './HeroElements';
 import { useTheme } from '../../hooks/useTheme';
 import BackendDevHero from '../../images/backend_dev_hero.gif';
@@ -26,36 +23,8 @@ function Hero() {
   const { theme } = useTheme();
   const [showScroll, setShowScroll] = useState(false);
 
-  const shapes = [
-    { size: 60, x: '10%', y: '15%', delay: 0 },
-    { size: 40, x: '85%', y: '20%', delay: 0.3 },
-    { size: 30, x: '75%', y: '70%', delay: 0.6 },
-    { size: 50, x: '15%', y: '75%', delay: 0.2 },
-  ];
-
   return (
     <HeroSection id="hero">
-      {shapes.map((s, i) => (
-        <FloatingShape
-          key={i}
-          style={{
-            width: s.size,
-            height: s.size,
-            left: s.x,
-            top: s.y,
-          }}
-          animate={{
-            y: [0, -20, 0],
-            opacity: [0.1, 0.2, 0.1],
-          }}
-          transition={{
-            duration: 4 + i,
-            repeat: Infinity,
-            delay: s.delay,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
 
       <div className="Container">
         <HeroContent>
