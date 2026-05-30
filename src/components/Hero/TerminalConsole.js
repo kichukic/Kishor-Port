@@ -131,30 +131,49 @@ const Cursor = styled.span`
 `;
 
 const initialLogs = [
-  { tag: '[SYSTEM]', color: '#ffffff', text: 'Initializing portfolio backend kernel v3.12.0...' },
-  { tag: '[CONFIG]', color: '#a1a1aa', text: 'Parsing local environmental schema config.json... OK' },
-  { tag: '[DB_CONN]', color: '#ffffff', text: 'Connecting to AWS RDS master database instance... Connected' },
-  { tag: '[REDIS]', color: '#a1a1aa', text: 'Binding TCP session socket store to memory cluster... Connected (0.84ms)' },
-  { tag: '[MQ_GATE]', color: '#d4d4d8', text: 'Launching RabbitMQ daemon listeners... 4 task queues established' },
-  { tag: '[DAEMON]', color: '#ffffff', text: 'Express API gateway successfully bound on SSL port 3000' },
-  { tag: '[SOCKETS]', color: '#ffffff', text: 'Listening for active Socket.IO connections (heartbeat frequency: 25s)' },
-  { tag: '[AI_MODEL]', color: '#a1a1aa', text: 'Preloading Zolio evaluation model weights into memory buffer... Loaded (430ms)' },
-  { tag: '[CRON]', color: '#d4d4d8', text: 'Triggering scheduled cron daemon: [AQI_Hyperlocal_Sync] (frequency: 5m)' },
-];
-
-const loopLogs = [
-  { tag: '[GET]', color: '#ffffff', text: '200 OK - /api/v1/projects (Client IP: 198.51.100.12 - Latency: 8ms)' },
-  { tag: '[SOCKETS]', color: '#ffffff', text: 'Handshake successful - Establish connection client_id: z7Y9f_3' },
-  { tag: '[CACHE]', color: '#a1a1aa', text: 'Redis hit for cache key: /api/v1/skills (Response served instantly)' },
-  { tag: '[CRON]', color: '#d4d4d8', text: 'CronJob AQI_Hyperlocal_Sync execution starting... OK' },
-  { tag: '[DB_QUERY]', color: '#ffffff', text: 'SELECT * FROM experience WHERE visible = 1... 3 rows fetched (2.1ms)' },
-  { tag: '[POST]', color: '#ffffff', text: '201 Created - /api/v1/contact/handshake (Encrypted packet secure)' },
-  { tag: '[AI_EVAL]', color: '#a1a1aa', text: 'Zolio LLM analysis triggered - prompt tokens: 1042 - completion tokens: 531' },
+  { tag: 'kishor@backend-node:~$', color: '#00ff88', text: 'curl -s https://api.kishor.dev/resume' },
+  { tag: '[SYSTEM]', color: '#ffffff', text: 'Fetching profile package... OK (142ms)' },
+  { tag: '================== KISHOR TH ==================', color: '#ffffff', text: '' },
+  { tag: 'Role:', color: '#ffffff', text: 'Node.js Developer (4 Years Experience)' },
+  { tag: 'Contact:', color: '#a1a1aa', text: 'Aluva, Kerala | kishor.th@hotmail.com' },
+  { tag: 'Links:', color: '#a1a1aa', text: 'github.com/kichukic | kichukic.github.io/Kishor-Port' },
+  { tag: '================== CORE SKILLS ==================', color: '#ffffff', text: '' },
+  { tag: 'Technical:', color: '#00ff88', text: 'JavaScript (ES6+), TypeScript, Node.js, Express.js, REST APIs, WebSockets' },
+  { tag: 'Databases:', color: '#ffffff', text: 'MongoDB (Aggregations), MySQL, Redis (Caching)' },
+  { tag: 'Cloud/Ops:', color: '#a1a1aa', text: 'AWS (EC2, S3), GCP, GitHub Actions, Jenkins, Bitbucket' },
+  { tag: 'Tools/Misc:', color: '#a1a1aa', text: 'VS Code, WebStorm, Docker, Docker Compose, Postman, Jest, Mocha' },
+  { tag: 'Languages:', color: '#ffffff', text: 'English (Fluent), Malayalam (Proficient), Hindi (Fluent)' },
+  { tag: '================== WORK EXPERIENCE ==================', color: '#ffffff', text: '' },
+  { tag: 'Tamcherry:', color: '#00ff88', text: 'Node.js Developer (Dec 2024 - Present)' },
+  { tag: '  * Zolio:', color: '#d4d4d8', text: 'Architected scalable APIs using Node.js, Express, MongoDB for AI platform' },
+  { tag: '  * LLM API:', color: '#d4d4d8', text: 'Integrated OpenAI/Gemini for question generation & candidate evaluation' },
+  { tag: '  * DevOps:', color: '#d4d4d8', text: 'Led Bitbucket/GitHub Actions CI/CD setup, AWS infrastructure, Redis caching' },
+  { tag: 'Alcodex:', color: '#00ff88', text: 'Node.js Developer (Mar 2022 - Nov 2024)' },
+  { tag: '  * Envitus:', color: '#d4d4d8', text: 'Developed IoT suite for real-time monitoring of hyperlocal air quality' },
+  { tag: '  * Querying:', color: '#d4d4d8', text: 'Designed MongoDB aggregations for efficient AQI analytics' },
+  { tag: '  * CI/CD:', color: '#d4d4d8', text: 'Automated code testing & AWS/GCP deployments via GitHub Actions' },
+  { tag: 'Resurs:', color: '#00ff88', text: 'Node.js Intern (Oct 2021 - Mar 2022)' },
+  { tag: '  * Chat:', color: '#d4d4d8', text: 'Developed real-time chat application with WebSockets & JWT authentication' },
+  { tag: '================== PROJECTS ==================', color: '#ffffff', text: '' },
+  { tag: 'Zolio.ai:', color: '#00ff88', text: 'AI automated recruitment platform conducting L1/L2 interview assessments.' },
+  { tag: 'Chat App:', color: '#00ff88', text: 'Real-time WebSocket instant messaging with MongoDB storage and JWT security' },
+  { tag: '================== CERTIFICATIONS ==================', color: '#ffffff', text: '' },
+  { tag: 'Certs:', color: '#00ff88', text: 'AWS Certified Solutions Architect | Google Cloud Professional Cloud Architect' },
+  { tag: '================== EDUCATION ==================', color: '#ffffff', text: '' },
+  { tag: 'College:', color: '#a1a1aa', text: 'B.com (Sep 2014 - Oct 2018) @ C.E.T. College of Management' },
+  { tag: 'School:', color: '#a1a1aa', text: 'Plustwo (Aug 2013 - Aug 2014) @ Eloor GHSS' },
+  { tag: '[SYSTEM]', color: '#00ff88', text: 'Resume successfully loaded. kishor@backend-node:~$' }
 ];
 
 // Simple helper to highlight success terms monochromatic style
 const formatLogText = (text) => {
-  const terms = ['OK', 'Connected', 'Bound', 'Listening', 'Loaded', 'Success', 'established', 'starting'];
+  const terms = [
+    'Node.js', 'Express.js', 'MongoDB', 'MySQL', 'Redis', 'AWS', 'GCP', 
+    'Docker', 'Docker Compose', 'WebSockets', 'JWT', 'TypeScript', 
+    'OpenAI', 'Gemini', 'Zolio', 'Envitus', 'Chat App', 'Bitbucket', 
+    'GitHub Actions', 'Jenkins', 'Postman', 'Jest', 'Mocha', 'REST APIs', 
+    'Solutions Architect', 'Cloud Architect', 'Successful', 'OK'
+  ];
   let formatted = text;
   terms.forEach(term => {
     const regex = new RegExp(`\\b${term}\\b`, 'g');
@@ -166,38 +185,56 @@ const formatLogText = (text) => {
 function TerminalConsole() {
   const [logs, setLogs] = useState([]);
   const [activeLogIndex, setActiveLogIndex] = useState(0);
+  const [currentTypedText, setCurrentTypedText] = useState('');
+  const [charIndex, setCharIndex] = useState(0);
   const containerRef = useRef(null);
+  const bodyRef = useRef(null);
 
   const { scrollY } = useScroll();
 
-  // Rapidly shrink (1.0 -> 0.75) and fade (1.0 -> 0.0) over a tiny 250px scroll window
-  const scale = useTransform(scrollY, [0, 250], [1, 0.75]);
-  const opacity = useTransform(scrollY, [0, 250], [1, 0]);
+  // Gradually shrink (1.0 -> 0.75) and fade (1.0 -> 0.0) over a 800px scroll window for a slower transition
+  const scale = useTransform(scrollY, [0, 800], [1, 0.75]);
+  const opacity = useTransform(scrollY, [0, 800], [1, 0]);
 
   useEffect(() => {
-    if (activeLogIndex < initialLogs.length) {
+    const currentLine = initialLogs[activeLogIndex % initialLogs.length];
+    if (!currentLine) return;
+
+    if (charIndex < currentLine.text.length) {
+      // Type character-by-character
       const timer = setTimeout(() => {
-        setLogs(prev => [...prev, initialLogs[activeLogIndex]]);
-        setActiveLogIndex(prev => prev + 1);
-      }, 500 + Math.random() * 500);
+        setCurrentTypedText(prev => prev + currentLine.text[charIndex]);
+        setCharIndex(prev => prev + 1);
+      }, 15 + Math.random() * 20); // Smooth typing character speed (15ms - 35ms)
       return () => clearTimeout(timer);
     } else {
-      // Loop logs
+      // Pause briefly on the completed line to make it readable, then commit to log history
       const timer = setTimeout(() => {
-        const randomLog = loopLogs[Math.floor(Math.random() * loopLogs.length)];
-        // Keep logs limit
         setLogs(prev => {
-          const next = [...prev, randomLog];
-          if (next.length > 20) {
-            return next.slice(next.length - 20);
+          const next = [...prev, currentLine];
+          // Keep a buffer of the last 80 terminal lines to preserve browser memory
+          if (next.length > 80) {
+            return next.slice(next.length - 80);
           }
           return next;
         });
-        setActiveLogIndex(prev => prev + 1); // trigger infinite update
-      }, 1500 + Math.random() * 1500);
+
+        // Advance to the next line and reset character index
+        setActiveLogIndex(prev => prev + 1);
+        setCurrentTypedText('');
+        setCharIndex(0);
+      }, 700); // 700ms pause after a full line completes before starting the next one
       return () => clearTimeout(timer);
     }
-  }, [activeLogIndex]);
+  }, [activeLogIndex, charIndex]);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+    }
+  }, [logs, currentTypedText]);
+
+  const activeLine = initialLogs[activeLogIndex % initialLogs.length];
 
   return (
     <TerminalWrapper
@@ -220,13 +257,19 @@ function TerminalConsole() {
           PORT: 3000
         </ServerStatus>
       </TerminalHeader>
-      <TerminalBody>
+      <TerminalBody ref={bodyRef}>
         {logs.map((log, i) => (
           <LogLine key={i}>
             <LogTag color={log.color}>{log.tag}</LogTag>
             <LogContent>{formatLogText(log.text)}</LogContent>
           </LogLine>
         ))}
+        {activeLine && (
+          <LogLine style={{ opacity: 1 }}>
+            <LogTag color={activeLine.color}>{activeLine.tag}</LogTag>
+            <LogContent>{formatLogText(currentTypedText)}</LogContent>
+          </LogLine>
+        )}
         <LogLine style={{ opacity: 1 }}>
           <LogTag color="#ffffff">kishor@backend-node:~$&nbsp;</LogTag>
           <Cursor />

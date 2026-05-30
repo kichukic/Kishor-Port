@@ -44,6 +44,7 @@ export const CardLeft = styled.div`
     object-fit: contain;
     filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.08));
     animation: ${float} 6s ease-in-out infinite;
+    mix-blend-mode: screen;
   }
 `;
 

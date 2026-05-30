@@ -1,10 +1,21 @@
+import Zolioimage from "../images/zolio_project_vector.gif";
 import Chatappimage from "../images/chatapp_project_vector.gif";
 import Ecommerceimage from "../images/ecommerce_project_vector.gif";
-import Taskmanagerimage from "../images/taskmanager_project_vector.gif";
 
 export const projectsData = [
   {
     id: 1,
+    img: Zolioimage,
+    title: 'Zolio.ai - AI Interview Platform',
+    description:
+      'An AI-powered automated recruitment and campus hiring screening platform conducting 24/7 conversional L1/L2 assessments. Backed by custom resume scoring algorithms, automated shortlists, and robust LLM data processing pipelines.',
+    tech_stack: ['Node.js', 'Express.js', 'MongoDB', 'OpenAI/Gemini', 'Redis', 'AWS'],
+    github_url: '',
+    demo_url: 'https://zolio.ai',
+    featured: true,
+  },
+  {
+    id: 2,
     img: Chatappimage,
     title: 'Chat-App Service',
     description:
@@ -15,23 +26,12 @@ export const projectsData = [
     featured: true,
   },
   {
-    id: 2,
+    id: 3,
     img: Ecommerceimage,
     title: 'E-Commerce Core API',
     description:
       'A fully secured, highly optimized transaction pipeline driving cart queues, database gateways, stripe billing protocols, and instant catalog search pipelines with low-latency indexing.',
     tech_stack: ['Node.js', 'Express.js', 'Stripe API', 'MySQL', 'Redis', 'Docker'],
-    github_url: 'https://github.com/kichukic',
-    demo_url: '',
-    featured: true,
-  },
-  {
-    id: 3,
-    img: Taskmanagerimage,
-    title: 'Task Scheduler Daemon',
-    description:
-      'A distributed cron background daemon running rabbitmq queue brokers, load balancers, and containerized cron clusters. Monitors heartbeat statuses, memory caps, and automated job retries.',
-    tech_stack: ['Node.js', 'RabbitMQ', 'Cron Jobs', 'Docker', 'GCP', 'GitHub Actions'],
     github_url: 'https://github.com/kichukic',
     demo_url: '',
     featured: true,
