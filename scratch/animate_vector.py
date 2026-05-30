@@ -34,18 +34,20 @@ def generate_animated_gif(input_path, output_path):
     # Grid of coordinates
     y_coords, x_coords = np.ogrid[:h, :w]
     
-    # Pulse source near the bottom center ("USER ACCESS" node)
-    cx, cy = w // 2, int(h * 0.85)
-    dist = np.sqrt((x_coords - cx)**2 + (y_coords - cy)**2)
+    # Glow wave travels horizontally from left to right along the X-axis
+    dist = x_coords
     
     frames = []
     num_frames = 24
-    max_dist = 1400.0
     width = 120.0
     
+    # Sweep from -2*width to w + 2*width for a smooth off-screen entry and exit
+    min_radius = -2.0 * width
+    max_radius = float(w) + 2.0 * width
+    
     for t in range(num_frames):
-        # Pulse sweeps from 0 to max_dist
-        radius = (t / float(num_frames)) * max_dist
+        # Linear interpolation from min_radius to max_radius
+        radius = min_radius + (t / float(num_frames - 1)) * (max_radius - min_radius)
         
         # Gaussian wave weight
         weight = np.exp(-((dist - radius) / width)**2)
