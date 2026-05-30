@@ -98,6 +98,7 @@ export const InfoItem = styled.div`
 
   @media (max-width: 768px) {
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   svg {

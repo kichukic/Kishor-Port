@@ -97,6 +97,12 @@ const LogLine = styled.div`
   @keyframes logShow {
     to { opacity: 1; }
   }
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    gap: 0.15rem;
+    align-items: flex-start;
+  }
 `;
 
 const LogTag = styled.span`

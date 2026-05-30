@@ -49,8 +49,9 @@ export const StatsRow = styled.div`
   gap: 1rem;
   margin-top: 1.5rem;
 
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(3, 1fr);
+  @media (max-width: 576px) {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
   }
 `;
 

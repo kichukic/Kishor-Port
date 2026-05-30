@@ -92,6 +92,12 @@ export const TimelineWrapper = styled.div`
     background: ${({ theme }) => theme.gradient};
     opacity: 0.4;
   }
+
+  @media (max-width: 576px) {
+    &::before {
+      left: 14px;
+    }
+  }
 `;
 
 export const TimelineItem = styled(motion.div)`
@@ -102,6 +108,11 @@ export const TimelineItem = styled(motion.div)`
 
   &:last-child {
     padding-bottom: 0;
+  }
+
+  @media (max-width: 576px) {
+    padding-left: 36px;
+    padding-bottom: 2.5rem;
   }
 `;
 
@@ -128,6 +139,13 @@ export const Dot = styled.div`
   border: 3px solid #ffffff;
   z-index: 2;
   animation: ${glowRipple} 2.5s infinite ease-out;
+
+  @media (max-width: 576px) {
+    left: 6px;
+    width: 16px;
+    height: 16px;
+    border-width: 2.5px;
+  }
 `;
 
 export const Card = styled.div`
@@ -142,6 +160,10 @@ export const Card = styled.div`
     border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 40px rgba(255, 255, 255, 0.08);
     transform: translateY(-8px) scale(1.02);
+  }
+
+  @media (max-width: 576px) {
+    padding: 1.25rem 1rem;
   }
 `;
 
