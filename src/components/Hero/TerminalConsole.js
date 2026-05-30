@@ -193,6 +193,7 @@ function TerminalConsole() {
   const [activeLogIndex, setActiveLogIndex] = useState(0);
   const [currentTypedText, setCurrentTypedText] = useState('');
   const [charIndex, setCharIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef(null);
   const bodyRef = useRef(null);
 
@@ -201,6 +202,13 @@ function TerminalConsole() {
   // Gradually shrink (1.0 -> 0.75) and fade (1.0 -> 0.0) over a 800px scroll window for a slower transition
   const scale = useTransform(scrollY, [0, 800], [1, 0.75]);
   const opacity = useTransform(scrollY, [0, 800], [1, 0]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const currentLine = initialLogs[activeLogIndex % initialLogs.length];
@@ -245,7 +253,10 @@ function TerminalConsole() {
   return (
     <TerminalWrapper
       ref={containerRef}
-      style={{ scale, opacity }}
+      style={{
+        scale: isMobile ? 1 : scale,
+        opacity: isMobile ? 1 : opacity
+      }}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
