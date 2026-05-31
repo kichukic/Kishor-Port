@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { skillCategories } from '../../data/skills';
 import SectionWrapper from '../shared/SectionWrapper';
 import SkillConstellation from './SkillConstellation';
+import SkillsMotherboardBackground from './SkillsMotherboardBackground';
 import {
   SkillsGrid,
   CategoryCard,
@@ -50,6 +51,7 @@ const cardVariants = {
 function Skills() {
   return (
     <SectionWrapper id="skills" title="Skills & Proficiency">
+      <SkillsMotherboardBackground />
       <SkillConstellation categories={skillCategories} />
       <SkillsGrid
         as={motion.div}
@@ -59,7 +61,7 @@ function Skills() {
         viewport={{ once: true, margin: '-50px' }}
       >
         {skillCategories.map((cat) => (
-          <CategoryCard key={cat.category} variants={cardVariants}>
+          <CategoryCard key={cat.category} variants={cardVariants} data-category-card="true">
             <CategoryHeader>
               <CategoryTitle>{cat.category}</CategoryTitle>
               {categoryIcons[cat.category] && (
