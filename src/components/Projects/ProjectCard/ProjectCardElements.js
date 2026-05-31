@@ -2,6 +2,11 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import { motion } from 'framer-motion';
 
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`;
+
 export const Card = styled(motion.div)`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -14,11 +19,35 @@ export const Card = styled(motion.div)`
   margin-bottom: 2rem;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  position: relative;
+  perspective: 1000px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(255, 255, 255, 0.3),
+      transparent 40%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.08);
-    transform: translateY(-8px);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.08), 0 0 80px rgba(255, 255, 255, 0.03);
   }
 
   @media (max-width: 768px) {

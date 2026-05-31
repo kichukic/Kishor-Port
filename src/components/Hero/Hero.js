@@ -18,6 +18,7 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import BackendDevHero from '../../images/backend_dev_hero.gif';
 import TerminalConsole from './TerminalConsole';
+import ScrambleText from '../shared/ScrambleText';
 
 function Hero() {
   const { theme } = useTheme();
@@ -38,7 +39,7 @@ function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Hello, I'm
+              <ScrambleText text="Hello, I'm" speed={18} />
             </Greeting>
 
             <Name
@@ -46,7 +47,7 @@ function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <span className="highlight">Kishor TH</span>
+              <span className="highlight"><ScrambleText text="Kishor TH" speed={20} /></span>
             </Name>
 
             <Subtitle

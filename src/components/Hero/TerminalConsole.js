@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { keyframes } from '@emotion/react';
+
+const scanlineDrift = keyframes`
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+`;
+
+const screenFlicker = keyframes`
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+`;
 
 const TerminalWrapper = styled(motion.div)`
   background: rgba(255, 255, 255, 0.02);
@@ -13,6 +28,58 @@ const TerminalWrapper = styled(motion.div)`
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 255, 255, 0.02);
   overflow: hidden;
   font-family: 'Courier New', Courier, monospace;
+  position: relative;
+  animation: ${screenFlicker} 5s infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.015) 2px,
+      rgba(255, 255, 255, 0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 60%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
+    pointer-events: none;
+    z-index: 11;
+  }
+`;
+
+const ScanlineOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 12;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 100%
+    );
+    animation: ${scanlineDrift} 4s linear infinite;
+  }
 `;
 
 const TerminalHeader = styled.div`
@@ -274,6 +341,7 @@ function TerminalConsole() {
           PORT: 3000
         </ServerStatus>
       </TerminalHeader>
+      <ScanlineOverlay />
       <TerminalBody ref={bodyRef}>
         {logs.map((log, i) => (
           <LogLine key={i}>
