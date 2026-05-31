@@ -13,6 +13,7 @@ import ScrollToTop from "../components/SocialIcon/ScrollToTop";
 import Header from "../components/Header/Header";
 import Dropdown from "../components/Dropdown/Dropdown";
 import BinaryPortal from "../components/Hero/BinaryPortal";
+import ScrollHUD from "../components/shared/ScrollHUD";
 
 
 function Home() {
@@ -55,6 +56,7 @@ function Home() {
       <Contact />
       <FixSocialIcon />
       <ScrollToTop />
+      <ScrollHUD />
       <Footer />
     </>
   );

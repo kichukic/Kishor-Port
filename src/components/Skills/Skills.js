@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { skillCategories } from '../../data/skills';
 import SectionWrapper from '../shared/SectionWrapper';
+import SkillConstellation from './SkillConstellation';
 import {
   SkillsGrid,
   CategoryCard,
@@ -49,6 +50,7 @@ const cardVariants = {
 function Skills() {
   return (
     <SectionWrapper id="skills" title="Skills & Proficiency">
+      <SkillConstellation categories={skillCategories} />
       <SkillsGrid
         as={motion.div}
         variants={containerVariants}
