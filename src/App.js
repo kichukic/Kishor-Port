@@ -6,9 +6,12 @@ import { ThemeProvider as EmotionThemeProvider } from "@emotion/react";
 import GlobalStyles from "./styles/GlobalStyles";
 import VideoBackground from "./components/shared/VideoBackground";
 import Home from "./pages/Home";
+import { useKonamiCode } from "./hooks/useKonamiCode";
+import { EasterEggOverlay, AchievementBadgePersistent } from "./components/shared/EasterEggOverlay";
 
 function AppContent() {
   const { theme } = useTheme();
+  const { activated, showBanner } = useKonamiCode();
 
   const muiTheme = createTheme({
     palette: {
@@ -36,6 +39,8 @@ function AppContent() {
         <div style={{ position: "relative", zIndex: 1 }}>
           <Home />
         </div>
+        <EasterEggOverlay show={showBanner} />
+        <AchievementBadgePersistent show={activated && !showBanner} />
       </EmotionThemeProvider>
     </MuiThemeProvider>
   );

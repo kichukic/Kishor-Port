@@ -43,6 +43,47 @@ export const Logo = styled.div`
   cursor: default;
 `;
 
+export const StatusBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.5px;
+  cursor: default;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const StatusDot = styled.span`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff88;
+  display: inline-block;
+  animation: statusPulse 1.8s infinite ease-in-out;
+
+  @keyframes statusPulse {
+    0% { opacity: 0.4; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+    50% { opacity: 1; box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.1); }
+    100% { opacity: 0.4; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+  }
+`;
+
 export const NavMenu = styled.div`
   display: flex;
   align-items: center;

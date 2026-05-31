@@ -14,6 +14,7 @@ import Header from "../components/Header/Header";
 import Dropdown from "../components/Dropdown/Dropdown";
 import BinaryPortal from "../components/Hero/BinaryPortal";
 
+
 function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);

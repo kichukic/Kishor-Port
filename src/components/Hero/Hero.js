@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { FiArrowDown, FiGithub, FiLinkedin } from 'react-icons/fi';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import {
   HeroSection,
   HeroContent,
@@ -23,9 +24,45 @@ import ScrambleText from '../shared/ScrambleText';
 function Hero() {
   const { theme } = useTheme();
   const [showScroll, setShowScroll] = useState(false);
+  const sectionRef = useRef(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { stiffness: 150, damping: 20, mass: 0.5 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
+
+  const leftX = useTransform(smoothX, [-0.5, 0.5], [20, -20]);
+  const leftY = useTransform(smoothY, [-0.5, 0.5], [15, -15]);
+
+  const rightX = useTransform(smoothX, [-0.5, 0.5], [-30, 30]);
+  const rightY = useTransform(smoothY, [-0.5, 0.5], [-20, 20]);
+
+  const termX = useTransform(smoothX, [-0.5, 0.5], [10, -10]);
+  const termY = useTransform(smoothY, [-0.5, 0.5], [8, -8]);
+
+  const handleMouseMove = (e) => {
+    if (!sectionRef.current) return;
+    const rect = sectionRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   return (
-    <HeroSection id="hero">
+    <HeroSection
+      id="hero"
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
 
       <div className="Container">
         <HeroContent>
@@ -33,6 +70,7 @@ function Hero() {
             initial={{ opacity: 0, x: -60 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
+            style={{ x: leftX, y: leftY }}
           >
             <Greeting
               initial={{ opacity: 0, y: 20 }}
@@ -111,6 +149,7 @@ function Hero() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            style={{ x: rightX, y: rightY }}
           >
             <HeroImage
               src={BackendDevHero}
@@ -128,7 +167,9 @@ function Hero() {
             />
           </HeroRight>
         </HeroContent>
-        <TerminalConsole />
+        <motion.div style={{ x: termX, y: termY }}>
+          <TerminalConsole />
+        </motion.div>
       </div>
     </HeroSection>
   );
