@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
+import { useSound } from '../../hooks/useSound';
 
 const ConstellationContainer = styled.div`
   width: 100%;
@@ -102,6 +103,7 @@ function SkillConstellation({ categories }) {
   const isolatedCategoryRef = useRef(null);
   const expandedNodeRef = useRef(null);
   const orbitalParticlesRef = useRef([]);
+  const { skillPing, skillClick, nodeFly, nodeArrive } = useSound();
 
   const getInboundPosition = useCallback((targetX, targetY, w, h) => {
     const side = Math.floor(Math.random() * 4);
@@ -510,6 +512,7 @@ function SkillConstellation({ categories }) {
             node.arrived = true;
             node.x = orbitX;
             node.y = orbitY;
+            nodeArrive();
           } else {
             // Smooth ease-in-out curve for Bezier interpolation
             const t = node.flyProgress;
@@ -824,6 +827,7 @@ function SkillConstellation({ categories }) {
           node.isFlyingHome = false; // Intercept mid-flight and grab it
           dragOffsetRef.current = { x: node.x - mx, y: node.y - my };
           canvas.style.cursor = 'grabbing';
+          skillClick();
 
           // Toggle expand on click
           if (expandedNodeRef.current === node) {
@@ -910,6 +914,7 @@ function SkillConstellation({ categories }) {
           node.flyProgress = 0;
           node.isFlyingHome = true;
           node.arrived = false; // Take off!
+          nodeFly();
 
           node.baseX = baseX;
           node.baseY = baseY;

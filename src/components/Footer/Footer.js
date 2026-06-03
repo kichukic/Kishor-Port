@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { FiGithub, FiLinkedin, FiHeart } from 'react-icons/fi';
 import { useTheme } from '../../hooks/useTheme';
+import { useSound } from '../../hooks/useSound';
 
 const FooterWrapper = styled.footer`
   position: relative;
@@ -65,6 +66,7 @@ const FooterText = styled.p`
 `;
 
 function Footer() {
+  const { socialHover, click } = useSound();
   return (
     <FooterWrapper>
       <div className="Container">
@@ -76,6 +78,8 @@ function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
+              onMouseEnter={socialHover}
+              onClick={click}
             >
               <FiGithub />
             </FooterLink>
@@ -84,6 +88,8 @@ function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
+              onMouseEnter={socialHover}
+              onClick={click}
             >
               <FiLinkedin />
             </FooterLink>

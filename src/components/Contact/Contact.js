@@ -18,11 +18,14 @@ import {
 } from './ContactElements';
 
 import ContactConnectionGif from '../../images/contact_connection_vector.gif';
+import { useSound } from '../../hooks/useSound';
 
 function Contact() {
   const [showTooltip, setShowTooltip] = useState(false);
+  const { copy, socialHover, click } = useSound();
 
-  const copyEmail = () => {
+  const handleCopyEmail = () => {
+    copy();
     navigator.clipboard.writeText('kishor.th@hotmail.com');
     setShowTooltip(true);
     setTimeout(() => setShowTooltip(false), 700);
@@ -58,7 +61,7 @@ function Contact() {
                   disableTouchListener
                   placement="top"
                 >
-                  <IconButton onClick={copyEmail} size="small" sx={{ color: 'inherit' }}>
+                  <IconButton onClick={handleCopyEmail} size="small" sx={{ color: 'inherit' }}>
                     <MdContentCopy size={16} />
                   </IconButton>
                 </Tooltip>
@@ -76,6 +79,8 @@ function Contact() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
+                onMouseEnter={socialHover}
+                onClick={click}
               >
                 <FiGithub />
               </SocialLink>
@@ -84,6 +89,8 @@ function Contact() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
+                onMouseEnter={socialHover}
+                onClick={click}
               >
                 <FiLinkedin />
               </SocialLink>

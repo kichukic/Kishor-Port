@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import { useSound } from '../../hooks/useSound';
 
 const glitchAnim1 = keyframes`
   0% { clip-path: inset(40% 0 61% 0); transform: translate(-2px, -1px); }
@@ -106,14 +107,16 @@ export default function SectionWrapper({ id, title, children }) {
   const titleRef = useRef(null);
   const isInView = useInView(titleRef, { once: true, margin: '-60px' });
   const [isGlitching, setIsGlitching] = React.useState(false);
+  const { sectionEnter } = useSound();
 
   React.useEffect(() => {
     if (isInView && title) {
+      sectionEnter();
       setIsGlitching(true);
       const timer = setTimeout(() => setIsGlitching(false), 400);
       return () => clearTimeout(timer);
     }
-  }, [isInView, title]);
+  }, [isInView, title, sectionEnter]);
 
   return (
     <Wrapper id={id}>

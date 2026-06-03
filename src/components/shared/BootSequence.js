@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { keyframes } from '@emotion/react';
+import { useSound } from '../../hooks/useSound';
+import { resumeContext } from '../../audio/soundEngine';
+import { AudioContext } from '../../context/AudioContext';
+import ApiGateway from '../../images/api_gateway_wide.gif';
 
 /* ─── KEYFRAMES ─── */
 const scanlineDrift = keyframes`
@@ -540,8 +544,68 @@ const hexStream = Array.from({ length: 120 }, () =>
   ).join(' ')
 ).join('\n');
 
+const HandshakeCard = styled.div`
+  background: rgba(10, 10, 15, 0.5);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 540px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 136, 0.05);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+`;
+
+const ImageContainer = styled.div`
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+`;
+
+const GatewayImage = styled.img`
+  width: 100%;
+  height: auto;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+  animation: floatSocket 5s ease-in-out infinite;
+
+  @keyframes floatSocket {
+    0% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-8px) scale(1.01); }
+    100% { transform: translateY(0px) scale(1); }
+  }
+`;
+
+const ConsoleText = styled.div`
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  color: #a1a1aa;
+  text-align: left;
+  width: 100%;
+  line-height: 1.6;
+  border-left: 3px solid #00ff88;
+  padding-left: 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 0 4px 4px 0;
+`;
+
 /* ─── COMPONENT ─── */
 function BootSequence({ onComplete }) {
+  const [started, setStarted] = useState(false);
   const [currentPhase, setCurrentPhase] = useState(-1);
   const [visibleLines, setVisibleLines] = useState([]);
   const [currentCode, setCurrentCode] = useState(null);
@@ -553,6 +617,8 @@ function BootSequence({ onComplete }) {
   const [showCursor, setShowCursor] = useState(true);
   const timersRef = useRef([]);
   const bodyRef = useRef(null);
+  const { bootPhase, bootComplete } = useSound();
+  const { muted, toggleMute } = useContext(AudioContext);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(t => clearTimeout(t));
@@ -560,6 +626,8 @@ function BootSequence({ onComplete }) {
   }, []);
 
   useEffect(() => {
+    if (!started) return;
+
     let phaseDelay = 300;
     let totalLines = 0;
     const allLineCount = bootPhases.reduce((sum, p) => sum + p.lines.length, 0);
@@ -574,6 +642,7 @@ function BootSequence({ onComplete }) {
     bootPhases.forEach((phase, phaseIndex) => {
       // Phase header
       const headerTimer = setTimeout(() => {
+        bootPhase();
         setCurrentPhase(phaseIndex);
         setMainProgress((phaseIndex / bootPhases.length) * 100);
       }, phaseDelay);
@@ -618,6 +687,7 @@ function BootSequence({ onComplete }) {
     timersRef.current.push(finalTimer);
 
     const finalScreenTimer = setTimeout(() => {
+      bootComplete();
       setShowFinal(true);
     }, phaseDelay + 700);
     timersRef.current.push(finalScreenTimer);
@@ -633,7 +703,7 @@ function BootSequence({ onComplete }) {
     timersRef.current.push(completeTimer);
 
     return () => clearTimers();
-  }, [onComplete, clearTimers]);
+  }, [started, onComplete, clearTimers]);
 
   // Auto-scroll terminal
   useEffect(() => {
@@ -641,6 +711,73 @@ function BootSequence({ onComplete }) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
   }, [visibleLines, currentCode]);
+
+  if (!started) {
+    return (
+      <Screen>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          padding: '2rem',
+          zIndex: 10
+        }}>
+          <HandshakeCard>
+            <GlitchLogo animate style={{ fontSize: '2.8rem', marginBottom: '0.2rem' }}>HIJACK</GlitchLogo>
+            
+            <ImageContainer>
+              <GatewayImage src={ApiGateway} alt="API Socket Gateway connection tunnel" />
+            </ImageContainer>
+
+            <ConsoleText>
+              <span style={{ color: '#00ff88' }}>$ curl -X POST https://api.hijack.dev/v1/handshake</span><br />
+              <span style={{ color: '#ffffff' }}>&gt; wss://connection.established [SPACE_AMBIENT = ON]</span><br />
+              <span style={{ color: 'rgba(255,255,255,0.45)' }}>&gt; Awaiting TCP handshake authorization to initiate GUI...</span>
+            </ConsoleText>
+
+            <motion.button
+              whileHover={{ 
+                scale: 1.03, 
+                borderColor: '#00ff88', 
+                color: '#00ff88', 
+                boxShadow: '0 0 25px rgba(0, 255, 136, 0.4)',
+                background: 'rgba(0, 255, 136, 0.06)'
+              }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                resumeContext();
+                if (muted) {
+                  toggleMute();
+                }
+                setStarted(true);
+              }}
+              style={{
+                background: 'rgba(0, 255, 136, 0.02)',
+                border: '1px solid rgba(0, 255, 136, 0.3)',
+                color: '#00ff88',
+                padding: '1rem 2.2rem',
+                fontSize: '0.85rem',
+                fontFamily: 'Courier New, monospace',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                transition: 'all 0.3s ease',
+                letterSpacing: '4px',
+                textTransform: 'uppercase',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+                width: '100%',
+                fontWeight: 'bold'
+              }}
+            >
+              ESTABLISH HANDSHAKE
+            </motion.button>
+          </HandshakeCard>
+        </div>
+      </Screen>
+    );
+  }
 
   return (
     <AnimatePresence>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
+import { updateAmbientDroneSection } from '../../audio/soundEngine';
 
 const Overlay = styled.div`
   position: fixed;
@@ -23,6 +24,10 @@ const sectionTints = {
 function AmbientOverlay() {
   const [activeSection, setActiveSection] = useState('hero');
   const observerRef = useRef(null);
+
+  useEffect(() => {
+    updateAmbientDroneSection(activeSection);
+  }, [activeSection]);
 
   useEffect(() => {
     const sections = document.querySelectorAll('[id]');

@@ -9,8 +9,11 @@ import {
   CertLink,
 } from './certificationelements';
 import './style.css';
+import { useSound } from '../../hooks/useSound';
 
 function Certification() {
+  const { hover, click } = useSound();
+
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://www.testdome.com/content/certificates/embed.css';
@@ -68,7 +71,7 @@ function Certification() {
               <CertImage src={cert.image} alt={cert.title} />
             )}
 
-            <CertLink href={cert.link} target="_blank" rel="noopener noreferrer">
+            <CertLink href={cert.link} target="_blank" rel="noopener noreferrer" onMouseEnter={hover} onClick={click}>
               View Certificate
             </CertLink>
           </CertCard>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { keyframes } from '@emotion/react';
+import { useSound } from '../../hooks/useSound';
 
 const scanlineDrift = keyframes`
   0% { transform: translateY(-100%); }
@@ -263,6 +264,7 @@ function TerminalConsole() {
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef(null);
   const bodyRef = useRef(null);
+  const { terminalType, terminalDone } = useSound();
 
   const { scrollY } = useScroll();
 
@@ -284,6 +286,7 @@ function TerminalConsole() {
     if (charIndex < currentLine.text.length) {
       // Type character-by-character
       const timer = setTimeout(() => {
+        terminalType();
         setCurrentTypedText(prev => prev + currentLine.text[charIndex]);
         setCharIndex(prev => prev + 1);
       }, 15 + Math.random() * 20); // Smooth typing character speed (15ms - 35ms)
@@ -291,6 +294,7 @@ function TerminalConsole() {
     } else {
       // Pause briefly on the completed line to make it readable, then commit to log history
       const timer = setTimeout(() => {
+        terminalDone();
         setLogs(prev => {
           const next = [...prev, currentLine];
           // Keep a buffer of the last 80 terminal lines to preserve browser memory

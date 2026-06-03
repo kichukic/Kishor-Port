@@ -12,8 +12,10 @@ import {
   StatLabel,
 } from './AboutElements';
 import Abouts from '../../images/about_me_vector.gif';
+import { useSound } from '../../hooks/useSound';
 
 function About() {
+  const { hover, hoverDeep } = useSound();
   return (
     <SectionWrapper id="about" title="About Me">
       <AboutContent>
@@ -37,6 +39,7 @@ function About() {
               },
             }}
             whileHover={{ scale: 1.05 }}
+            onMouseEnter={hover}
           />
         </AboutLeft>
 
@@ -75,6 +78,7 @@ function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
+              onMouseEnter={hoverDeep}
             >
               <StatNumber>4+</StatNumber>
               <StatLabel>Years Experience</StatLabel>
@@ -85,6 +89,7 @@ function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
+              onMouseEnter={hoverDeep}
             >
               <StatNumber>10+</StatNumber>
               <StatLabel>Projects</StatLabel>
@@ -95,6 +100,7 @@ function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
+              onMouseEnter={hoverDeep}
             >
               <StatNumber>15+</StatNumber>
               <StatLabel>Technologies</StatLabel>

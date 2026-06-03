@@ -13,6 +13,7 @@ import {
   Btn,
 } from './ProjectCardElements';
 import ScrambleText from '../../shared/ScrambleText';
+import { useSound } from '../../../hooks/useSound';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 40 },
@@ -25,10 +26,12 @@ const cardVariants = {
 
 function ProjectCard() {
   const cardRefs = useRef([]);
+  const { hoverDeep, click, cardReveal } = useSound();
 
   const handleMouseMove = useCallback((index, e) => {
     const card = cardRefs.current[index];
     if (!card) return;
+    hoverDeep();
 
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -84,6 +87,8 @@ function ProjectCard() {
                   target="_blank"
                   rel="noopener noreferrer"
                   primary
+                  onMouseEnter={hoverDeep}
+                  onClick={click}
                 >
                   <FiGithub /> <ScrambleText text="Code" speed={15} />
                 </Btn>
@@ -93,6 +98,8 @@ function ProjectCard() {
                   href={project.demo_url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onMouseEnter={hoverDeep}
+                  onClick={click}
                 >
                   <FiExternalLink /> <ScrambleText text="Live Demo" speed={15} />
                 </Btn>

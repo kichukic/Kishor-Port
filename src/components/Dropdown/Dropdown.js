@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { Link as ScrollLink } from 'react-scroll';
 import { FaTimes } from 'react-icons/fa';
 import { useTheme } from '../../hooks/useTheme';
+import { useSound } from '../../hooks/useSound';
 
 const Sidebar = styled.div`
   background: ${({ theme }) => theme.body};
@@ -64,6 +65,7 @@ const ResumeBtn = styled.a`
 
 function Dropdown({ isOpen, toggle }) {
   const { theme } = useTheme();
+  const { click, toggleClose, hover } = useSound();
 
   const links = [
     { to: 'projects', label: 'Projects' },
@@ -73,14 +75,25 @@ function Dropdown({ isOpen, toggle }) {
     { to: 'contact', label: 'Contact' },
   ];
 
+  const handleClose = () => {
+    toggleClose();
+    toggle();
+  };
+
+  const handleLinkClick = () => {
+    click();
+    toggle();
+  };
+
   return (
-    <Sidebar isOpen={isOpen} theme={theme} onClick={toggle}>
-      <CloseIcon onClick={toggle} />
+    <Sidebar isOpen={isOpen} theme={theme} onClick={handleClose}>
+      <CloseIcon onClick={handleClose} />
       <NavMenu>
         {links.map((link) => (
           <NavLink
             key={link.to}
-            onClick={toggle}
+            onClick={handleLinkClick}
+            onMouseEnter={hover}
             to={link.to}
             smooth
             spy
@@ -95,7 +108,8 @@ function Dropdown({ isOpen, toggle }) {
         href="https://www.linkedin.com/in/kishor-th-6a257a107/"
         target="_blank"
         rel="noopener noreferrer"
-        onClick={toggle}
+        onClick={handleLinkClick}
+        onMouseEnter={hover}
       >
         Resume
       </ResumeBtn>

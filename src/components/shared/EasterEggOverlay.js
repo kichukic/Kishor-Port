@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { keyframes } from '@emotion/react';
+import { useSound } from '../../hooks/useSound';
 
 const crtWarp = keyframes`
   0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
@@ -134,6 +135,11 @@ const BadgeDot = styled.span`
 `;
 
 function EasterEggOverlay({ show }) {
+  const { achievement } = useSound();
+
+  React.useEffect(() => {
+    if (show) achievement();
+  }, [show, achievement]);
   return (
     <AnimatePresence>
       {show && (

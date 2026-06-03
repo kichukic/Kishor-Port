@@ -2,6 +2,7 @@ import React from 'react';
 import { FiGithub, FiLinkedin } from 'react-icons/fi';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { useSound } from '../../hooks/useSound';
 
 const SocialBar = styled(motion.div)`
   position: fixed;
@@ -41,6 +42,7 @@ const SocialItem = styled.a`
 `;
 
 function FixSocialIcon() {
+  const { socialHover, click } = useSound();
   return (
     <SocialBar
       initial={{ opacity: 0, x: -20 }}
@@ -52,6 +54,8 @@ function FixSocialIcon() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub"
+        onMouseEnter={socialHover}
+        onClick={click}
       >
         <FiGithub />
       </SocialItem>
@@ -60,6 +64,8 @@ function FixSocialIcon() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="LinkedIn"
+        onMouseEnter={socialHover}
+        onClick={click}
       >
         <FiLinkedin />
       </SocialItem>

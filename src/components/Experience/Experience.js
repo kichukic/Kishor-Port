@@ -21,16 +21,19 @@ import {
 } from './ExperienceElements';
 
 import DbStackGif from '../../images/db_stack_tall.gif';
+import { useSound } from '../../hooks/useSound';
 
 function Experience() {
   const [blocks, setBlocks] = useState(1480402);
+  const { databaseSync } = useSound();
 
   useEffect(() => {
     const timer = setInterval(() => {
       setBlocks(prev => prev + Math.floor(Math.random() * 3) + 1);
+      databaseSync();
     }, 1500);
     return () => clearInterval(timer);
-  }, []);
+  }, [databaseSync]);
 
   return (
     <SectionWrapper id="experience" title="Experience">

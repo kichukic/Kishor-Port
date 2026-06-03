@@ -17,6 +17,7 @@ import {
   HeroImage,
 } from './HeroElements';
 import { useTheme } from '../../hooks/useTheme';
+import { useSound } from '../../hooks/useSound';
 import BackendDevHero from '../../images/backend_dev_hero.gif';
 import TerminalConsole from './TerminalConsole';
 import ScrambleText from '../shared/ScrambleText';
@@ -25,6 +26,7 @@ function Hero() {
   const { theme } = useTheme();
   const [showScroll, setShowScroll] = useState(false);
   const sectionRef = useRef(null);
+  const { hover, click, parallaxSwoosh } = useSound();
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -44,6 +46,7 @@ function Hero() {
 
   const handleMouseMove = (e) => {
     if (!sectionRef.current) return;
+    parallaxSwoosh();
     const rect = sectionRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -132,6 +135,8 @@ function Hero() {
                 href="https://github.com/kichukic"
                 target="_blank"
                 rel="noopener noreferrer"
+                onMouseEnter={hover}
+                onClick={click}
               >
                 <FiGithub /> View Work
               </PrimaryBtn>
@@ -139,6 +144,8 @@ function Hero() {
                 href="https://www.linkedin.com/in/kishor-th-6a257a107/"
                 target="_blank"
                 rel="noopener noreferrer"
+                onMouseEnter={hover}
+                onClick={click}
               >
                 <FiLinkedin /> LinkedIn
               </SecondaryBtn>

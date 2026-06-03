@@ -3,10 +3,13 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AudioProvider } from "./context/AudioContext";
 
 ReactDOM.render(
   <ThemeProvider>
-    <App />
+    <AudioProvider>
+      <App />
+    </AudioProvider>
   </ThemeProvider>,
   document.getElementById("root")
 );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { IconButton, Tooltip, styled } from '@mui/material';
 import { FiArrowUp } from 'react-icons/fi';
 import { animateScroll } from 'react-scroll';
+import { useSound } from '../../hooks/useSound';
 
 const StyledButton = styled(IconButton)`
   position: fixed;
@@ -23,6 +24,7 @@ const StyledButton = styled(IconButton)`
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
+  const { hover, scrollUp: playScrollUp } = useSound();
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 500);
@@ -30,13 +32,14 @@ function ScrollToTop() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollUp = () => {
+  const scrollToTop = () => {
+    playScrollUp();
     animateScroll.scrollToTop({ duration: 400 });
   };
 
   return visible ? (
     <Tooltip title="Scroll to top" placement="left">
-      <StyledButton onClick={scrollUp} aria-label="Scroll to top">
+      <StyledButton onClick={scrollToTop} onMouseEnter={hover} aria-label="Scroll to top">
         <FiArrowUp size={22} />
       </StyledButton>
     </Tooltip>
