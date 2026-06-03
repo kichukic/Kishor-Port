@@ -5,7 +5,6 @@ import { keyframes } from '@emotion/react';
 import { useSound } from '../../hooks/useSound';
 import { resumeContext } from '../../audio/soundEngine';
 import { AudioContext } from '../../context/AudioContext';
-import ApiGateway from '../../images/api_gateway_wide.gif';
 
 /* ─── KEYFRAMES ─── */
 const scanlineDrift = keyframes`
@@ -566,24 +565,83 @@ const ImageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+  background: transparent;
+  padding: 0.5rem;
 `;
 
-const GatewayImage = styled.img`
-  width: 100%;
-  height: auto;
-  opacity: 0.85;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
-  animation: floatSocket 5s ease-in-out infinite;
+const FlowPath = styled.path`
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+  stroke-dasharray: 30 200;
+  animation: flowAnim ${props => props.duration || '2.5s'} linear infinite;
+  animation-delay: ${props => props.delay || '0s'};
 
-  @keyframes floatSocket {
-    0% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-8px) scale(1.01); }
-    100% { transform: translateY(0px) scale(1); }
+  @keyframes flowAnim {
+    0% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: -230;
+    }
+  }
+`;
+
+const EndpointRing = styled.circle`
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseRing 2s infinite ease-in-out;
+  animation-delay: ${props => props.delay || '0s'};
+
+  @keyframes pulseRing {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scale(1.8);
+      opacity: 0.8;
+      stroke-width: 1.5;
+    }
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+      stroke-width: 0.5;
+    }
+  }
+`;
+
+const CoreRing = styled.circle`
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseCore 3s infinite ease-in-out;
+
+  @keyframes pulseCore {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+    50% {
+      transform: scale(1.15);
+      opacity: 0.8;
+      stroke-width: 2;
+    }
+  }
+`;
+
+const RotatingRing = styled.circle`
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rotateRing 12s linear infinite;
+
+  @keyframes rotateRing {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -729,7 +787,81 @@ function BootSequence({ onComplete }) {
             <GlitchLogo animate style={{ fontSize: '2.8rem', marginBottom: '0.2rem' }}>HIJACK</GlitchLogo>
             
             <ImageContainer>
-              <GatewayImage src={ApiGateway} alt="API Socket Gateway connection tunnel" />
+              <svg viewBox="0 0 400 300" width="100%" height="auto" style={{ overflow: 'visible' }}>
+                <defs>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Background Circuit Grid Lines (faint) */}
+                <path d="M 200,150 L 200,100 L 120,100 L 120,50" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 200,100 L 280,100 L 280,50" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 200,200 L 120,200 L 120,250" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 200,200 L 280,200 L 280,250" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 150,150 L 150,120 L 60,120" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 150,150 L 150,180 L 60,180" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 250,150 L 250,120 L 340,120" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                <path d="M 200,150 L 250,150 L 250,180 L 340,180" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+
+                {/* Glowing flowing data packets (white flow) */}
+                <FlowPath d="M 200,150 L 200,100 L 120,100 L 120,50" duration="2.2s" delay="0s" />
+                <FlowPath d="M 200,150 L 200,100 L 280,100 L 280,50" duration="2.6s" delay="0.4s" />
+                <FlowPath d="M 200,150 L 200,200 L 120,200 L 120,250" duration="2.0s" delay="0.8s" />
+                <FlowPath d="M 200,150 L 200,200 L 280,200 L 280,250" duration="2.4s" delay="0.2s" />
+                <FlowPath d="M 200,150 L 150,150 L 150,120 L 60,120" duration="2.8s" delay="0.6s" />
+                <FlowPath d="M 200,150 L 150,150 L 150,180 L 60,180" duration="2.1s" delay="1.0s" />
+                <FlowPath d="M 200,150 L 250,150 L 250,120 L 340,120" duration="3.0s" delay="0.3s" />
+                <FlowPath d="M 200,150 L 250,150 L 250,180 L 340,180" duration="1.8s" delay="0.7s" />
+
+                {/* Outer Endpoint Nodes & Glowing rings */}
+                <g filter="url(#glow)">
+                  {/* Branch A (120, 50) */}
+                  <EndpointRing cx="120" cy="50" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0s" />
+                  <circle cx="120" cy="50" r="3" fill="#ffffff" />
+                  
+                  {/* Branch B (280, 50) */}
+                  <EndpointRing cx="280" cy="50" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.4s" />
+                  <circle cx="280" cy="50" r="3" fill="#ffffff" />
+                  
+                  {/* Branch C (120, 250) */}
+                  <EndpointRing cx="120" cy="250" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.8s" />
+                  <circle cx="120" cy="250" r="3" fill="#ffffff" />
+                  
+                  {/* Branch D (280, 250) */}
+                  <EndpointRing cx="280" cy="250" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.2s" />
+                  <circle cx="280" cy="250" r="3" fill="#ffffff" />
+                  
+                  {/* Branch E (60, 120) */}
+                  <EndpointRing cx="60" cy="120" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.6s" />
+                  <circle cx="60" cy="120" r="3" fill="#ffffff" />
+                  
+                  {/* Branch F (60, 180) */}
+                  <EndpointRing cx="60" cy="180" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="1.0s" />
+                  <circle cx="60" cy="180" r="3" fill="#ffffff" />
+                  
+                  {/* Branch G (340, 120) */}
+                  <EndpointRing cx="340" cy="120" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.3s" />
+                  <circle cx="340" cy="120" r="3" fill="#ffffff" />
+                  
+                  {/* Branch H (340, 180) */}
+                  <EndpointRing cx="340" cy="180" r="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" delay="0.7s" />
+                  <circle cx="340" cy="180" r="3" fill="#ffffff" />
+                </g>
+
+                {/* Central Hub Core */}
+                <g filter="url(#glow)">
+                  <CoreRing cx="200" cy="150" r="16" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+                  <RotatingRing cx="200" cy="150" r="24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="6 4" />
+                  <circle cx="200" cy="150" r="8" fill="#ffffff" />
+                  <circle cx="200" cy="150" r="4" fill="#050508" />
+                  <circle cx="200" cy="150" r="2" fill="#ffffff" />
+                </g>
+              </svg>
             </ImageContainer>
 
             <ConsoleText>
