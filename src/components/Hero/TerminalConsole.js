@@ -264,7 +264,7 @@ function TerminalConsole() {
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef(null);
   const bodyRef = useRef(null);
-  const { terminalType, terminalDone } = useSound();
+  const { terminalType } = useSound();
 
   const { scrollY } = useScroll();
 
@@ -280,38 +280,34 @@ function TerminalConsole() {
   }, []);
 
   useEffect(() => {
-    const currentLine = initialLogs[activeLogIndex % initialLogs.length];
+    if (activeLogIndex >= initialLogs.length) return;
+
+    const currentLine = initialLogs[activeLogIndex];
     if (!currentLine) return;
 
     if (charIndex < currentLine.text.length) {
-      // Type character-by-character
       const timer = setTimeout(() => {
         terminalType();
         setCurrentTypedText(prev => prev + currentLine.text[charIndex]);
         setCharIndex(prev => prev + 1);
-      }, 15 + Math.random() * 20); // Smooth typing character speed (15ms - 35ms)
+      }, 15 + Math.random() * 20);
       return () => clearTimeout(timer);
     } else {
-      // Pause briefly on the completed line to make it readable, then commit to log history
       const timer = setTimeout(() => {
-        terminalDone();
         setLogs(prev => {
           const next = [...prev, currentLine];
-          // Keep a buffer of the last 80 terminal lines to preserve browser memory
           if (next.length > 80) {
             return next.slice(next.length - 80);
           }
           return next;
         });
-
-        // Advance to the next line and reset character index
         setActiveLogIndex(prev => prev + 1);
         setCurrentTypedText('');
         setCharIndex(0);
-      }, 700); // 700ms pause after a full line completes before starting the next one
+      }, 700);
       return () => clearTimeout(timer);
     }
-  }, [activeLogIndex, charIndex]);
+  }, [activeLogIndex, charIndex, terminalType]);
 
   useEffect(() => {
     if (bodyRef.current) {
@@ -319,7 +315,7 @@ function TerminalConsole() {
     }
   }, [logs, currentTypedText]);
 
-  const activeLine = initialLogs[activeLogIndex % initialLogs.length];
+  const activeLine = activeLogIndex < initialLogs.length ? initialLogs[activeLogIndex] : null;
 
   return (
     <TerminalWrapper
