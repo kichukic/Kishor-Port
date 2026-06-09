@@ -61,12 +61,11 @@ function ProjectCard() {
             const ox = c * PSIZE;
             const oy = r * PSIZE;
             const edge = ox < 2 || oy < 2 || ox > W - PSIZE - 2 || oy > H - PSIZE - 2;
-            const hue = 200 + (c / cols) * 50;
             const alpha = edge ? 0.55 : (0.06 + Math.random() * 0.1);
             particles.push({
               ox, oy, x: ox, y: oy,
               vx: 0, vy: 0,
-              color: `hsla(${hue},65%,65%,${alpha})`,
+              color: `hsla(0,0%,95%,${alpha})`,
               size: PSIZE - 0.5,
             });
           }
