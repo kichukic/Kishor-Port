@@ -7,6 +7,14 @@ const shimmer = keyframes`
   100% { background-position: 200% center; }
 `;
 
+export const DustCanvas = styled.canvas`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 20px;
+`;
+
 export const Card = styled(motion.div)`
   display: grid;
   grid-template-columns: 1fr 1fr;
