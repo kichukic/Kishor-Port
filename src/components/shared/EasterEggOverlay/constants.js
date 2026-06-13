@@ -54,11 +54,24 @@ export const BOSS_DEFS = [
 ];
 
 export const PU = {
-  HOMING:    { label: 'HOMING',    color: '#00eeff', icon: '⬡' },
-  RAPIDFIRE: { label: 'RAPID',     color: '#ffcc00', icon: '◈' },
-  SHIELD:    { label: 'SHIELD',    color: '#ff44ff', icon: '◉' },
+  HOMING:     { label: 'HOMING',    color: '#00eeff', icon: '⬡' },
+  RAPIDFIRE:  { label: 'RAPID',     color: '#ffcc00', icon: '◈' },
+  SHIELD:     { label: 'SHIELD',    color: '#ff44ff', icon: '◉' },
+  MULTISHOT:  { label: 'MULTI',     color: '#22d3ee', icon: '✦' },
+  BEAM:       { label: 'BEAM',      color: '#ef4444', icon: '║' },
+  GHOST:      { label: 'GHOST',     color: '#a855f7', icon: '👻' },
+  MAGNET:     { label: 'MAGNET',    color: '#10b981', icon: '◎' },
+  SCORE2X:    { label: '2X SCORE',  color: '#ec4899', icon: '★' },
 };
 export const PU_KEYS = Object.keys(PU);
+
+export const COMBO_TIMEOUT = 150;
+export const COMBO_MAX = 5;
+export const BOMB_CLEAR_DURATION = 999;
+export const GHOST_DURATION = 300;
+export const BEAM_DURATION = 480;
+export const MAGNET_DURATION = 720;
+export const SCORE2X_DURATION = 900;
 
 export const MINI_BOSS_DEFS = [
   { name: 'ABOMINATION',     hp: 80,  score: 300,  color: '#7f1d1d', W: 80,  H: 70,  speed: 1.2, attack: 'sweep' },
