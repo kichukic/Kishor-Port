@@ -42,6 +42,9 @@ function RetroSpaceGame({ onClose }) {
   const autoSaveTimerRef = useRef(0);
   const bestRef = useRef(lsGetBest());
   const bannerRef = useRef(null);
+  const initRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const initGame = useCallback((resumeData) => {
     const canvas = canvasRef.current;
@@ -107,14 +110,11 @@ function RetroSpaceGame({ onClose }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let initialized = false;
     const resize = () => {
-      const prevW = canvas.width;
-      const prevH = canvas.height;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      if (!initialized) {
-        initialized = true;
+      if (!initRef.current) {
+        initRef.current = true;
         initGame();
       } else {
         const s = stateRef.current;
@@ -133,7 +133,7 @@ function RetroSpaceGame({ onClose }) {
       const s = stateRef.current;
       if (!s) return;
       s.keys[e.code] = true;
-      if (e.code === 'Escape') { onClose(); return; }
+      if (e.code === 'Escape') { onCloseRef.current(); return; }
       if (e.code === 'KeyQ' && s.abilities.bombCD <= 0) {
         s.abilities.bombCD = 900;
         s.enemyBullets.length = 0;
@@ -1151,8 +1151,9 @@ function RetroSpaceGame({ onClose }) {
         canvas.removeEventListener('touchcancel', onTouchEnd);
       }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      initRef.current = false;
     };
-  }, [initGame, onClose]);
+  }, []);
 
   const existingSave = React.useMemo(() => lsGetSave(), []);
   const [hudState, setHudState] = React.useState({
@@ -1175,7 +1176,6 @@ function RetroSpaceGame({ onClose }) {
       show: (type) => setMsgState({ visible: true, type }),
       hide: () => setMsgState({ visible: false, type: null }),
     };
-    if (!existingSave) initGame();
   }, []);
 
   const heartsStr = '♥'.repeat(Math.max(0, hudState.lives)) + '♡'.repeat(Math.max(0, MAX_LIVES - hudState.lives));
