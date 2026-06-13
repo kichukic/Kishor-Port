@@ -16,7 +16,7 @@ import { createStars } from './factories/stars';
 import { createAsteroids, makeAsteroid } from './factories/asteroids';
 import { spawnEnemy } from './factories/enemy';
 import { spawnCrate } from './factories/crate';
-import { spawnBoss } from './factories/boss';
+import { spawnBoss, spawnMiniBoss } from './factories/boss';
 import { createExplosion } from './factories/explosions';
 import { lsGetBest, lsSetBest, lsGetSave, lsSetSave, lsClearSave } from './utils/localStorage';
 import { drawShip } from './drawing/ship';
@@ -26,7 +26,7 @@ import { drawLifePickup } from './drawing/lifePickup';
 import { drawMissile } from './drawing/missile';
 import { drawBullet } from './drawing/bullet';
 import { drawAsteroid } from './drawing/asteroid';
-import { drawBoss, drawLevelTimer, drawBossHpBar } from './drawing/boss';
+import { drawBoss, drawMiniBoss, drawLevelTimer, drawBossHpBar } from './drawing/boss';
 
 function RetroSpaceGame({ onClose }) {
   const canvasRef = useRef(null);
@@ -66,6 +66,9 @@ function RetroSpaceGame({ onClose }) {
       enemies: [],
       boss: null,
       bossActive: false,
+      miniBoss: null,
+      miniBossActive: false,
+      miniBossKillCount: 0,
       crates: [],
       explosions: [],
       stars: createStars(W, H),
@@ -513,6 +516,13 @@ function RetroSpaceGame({ onClose }) {
               scoreRef.current += e.maxHp * 15;
               lsSetBest(scoreRef.current);
               bestRef.current = lsGetBest();
+              s.miniBossKillCount++;
+              if (s.miniBossKillCount >= 30 && !s.miniBossActive && !s.bossActive) {
+                s.miniBoss = spawnMiniBoss(W, waveRef.current);
+                s.miniBossActive = true;
+                s.miniBossKillCount = 0;
+                bannerRef.current = { text: `💀 ${s.miniBoss.name} APPROACHES`, color: s.miniBoss.color, timer: 150 };
+              }
               if (Math.random() < LIFE_DROP_CHANCE && (livesRef.current < MAX_LIVES || player.health < MAX_HEALTH)) {
                 s.lifePickups.push({ x: e.x, y: e.y, vy: 1.2 + Math.random() * 0.5, wobble: Math.random() * Math.PI * 2, alive: true });
               }
@@ -622,6 +632,124 @@ function RetroSpaceGame({ onClose }) {
         }
       }
 
+      if (s.miniBossActive && s.miniBoss) {
+        const mb = s.miniBoss;
+        if (!mb.alive) {
+          explosions.push(...createExplosion(mb.x, mb.y, 30));
+          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(mb.x + (Math.random() - 0.5) * mb.W, mb.y + (Math.random() - 0.5) * mb.H, 10));
+          scoreRef.current += mb.score;
+          lsSetBest(scoreRef.current);
+          bestRef.current = lsGetBest();
+          s.miniBoss = null; s.miniBossActive = false;
+          bannerRef.current = { text: `✦ ${mb.name} DESTROYED`, color: '#00ff88', timer: 120 };
+          if (Math.random() < 0.4) {
+            s.lifePickups.push({ x: mb.x, y: mb.y, vy: 1.2, wobble: Math.random() * Math.PI * 2, alive: true });
+          }
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
+        } else {
+          mb.timer++;
+          if (mb.flash > 0) mb.flash--;
+          if (mb.entering) {
+            mb.y += 2;
+            if (mb.y >= 120) { mb.entering = false; mb.wanderTX = W / 2; mb.wanderTY = H * 0.4; mb.wanderTimer = 0; }
+          } else {
+            const spd = mb.hp <= mb.maxHp * 0.5 ? 1.3 : 1;
+            mb.wanderTimer = (mb.wanderTimer || 0) + 1;
+            if (!mb.wanderTX || mb.wanderTimer > 120 + Math.random() * 100) {
+              mb.wanderTX = 60 + Math.random() * (W - 120);
+              mb.wanderTY = 60 + Math.random() * (H * 0.65);
+              mb.wanderTimer = 0;
+            }
+            const dwx = mb.wanderTX - mb.x;
+            const dwy = mb.wanderTY - mb.y;
+            const dwDist = Math.sqrt(dwx * dwx + dwy * dwy) || 1;
+            const moveSpeed = 0.8 * spd;
+            mb.vx = (dwx / dwDist) * moveSpeed;
+            mb.vy = (dwy / dwDist) * moveSpeed;
+            mb.x += mb.vx;
+            mb.y += mb.vy;
+            mb.x = Math.max(mb.W / 2 + 10, Math.min(W - mb.W / 2 - 10, mb.x));
+            mb.y = Math.max(50, Math.min(H * 0.72, mb.y));
+          }
+          if (mb.hp <= mb.maxHp * 0.5 && mb.phase === 1) {
+            mb.phase = 2;
+            bannerRef.current = { text: `! ${mb.name} ENRAGES !`, color: '#ff2222', timer: 100 };
+          }
+          if (!mb.entering) {
+            const shootRate = mb.phase === 2 ? 30 : 55;
+            mb.shootTimer--;
+            if (mb.shootTimer <= 0) {
+              mb.shootTimer = shootRate;
+              const bspd = ENEMY_BULLET_SPEED * 1.1;
+              if (mb.attack === 'spread') {
+                const shots = mb.phase === 2 ? 5 : 3;
+                for (let i = 0; i < shots; i++) {
+                  const ang = (Math.PI / 2) + (i - (shots - 1) / 2) * 0.3;
+                  enemyBullets.push({ x: mb.x, y: mb.y + mb.H / 2, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+              } else if (mb.attack === 'spiral') {
+                const count = mb.phase === 2 ? 8 : 5;
+                for (let i = 0; i < count; i++) {
+                  const ang = (mb.timer * 0.07) + (i / count) * Math.PI * 2;
+                  enemyBullets.push({ x: mb.x, y: mb.y, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+              } else if (mb.attack === 'burst') {
+                const dx = player.x - mb.x, dy = player.y - mb.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const shots = mb.phase === 2 ? 5 : 3;
+                for (let i = 0; i < shots; i++) {
+                  const spread = (Math.random() - 0.5) * 0.5;
+                  enemyBullets.push({ x: mb.x, y: mb.y + mb.H / 2, vx: (dx / dist) * bspd + spread, vy: (dy / dist) * bspd + spread });
+                }
+              } else if (mb.attack === 'ring') {
+                const count = mb.phase === 2 ? 12 : 8;
+                for (let i = 0; i < count; i++) {
+                  const ang = (i / count) * Math.PI * 2;
+                  enemyBullets.push({ x: mb.x, y: mb.y, vx: Math.cos(ang) * bspd * 0.9, vy: Math.sin(ang) * bspd * 0.9 });
+                }
+              } else if (mb.attack === 'sweep') {
+                const count = mb.phase === 2 ? 6 : 4;
+                const baseAng = (Math.PI / 2) + Math.sin(mb.timer * 0.08) * 0.6;
+                for (let i = 0; i < count; i++) {
+                  const ang = baseAng + (i - (count - 1) / 2) * 0.18;
+                  enemyBullets.push({ x: mb.x, y: mb.y + mb.H / 2, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+              } else if (mb.attack === 'targeted') {
+                const dx = player.x - mb.x, dy = player.y - mb.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const tSpd = bspd * 1.4;
+                enemyBullets.push({ x: mb.x, y: mb.y + mb.H / 2, vx: (dx / dist) * tSpd, vy: (dy / dist) * tSpd });
+                if (mb.phase === 2) {
+                  enemyBullets.push({ x: mb.x - 12, y: mb.y, vx: (dx / dist) * tSpd * 0.9, vy: (dy / dist) * tSpd * 0.9 });
+                  enemyBullets.push({ x: mb.x + 12, y: mb.y, vx: (dx / dist) * tSpd * 0.9, vy: (dy / dist) * tSpd * 0.9 });
+                }
+              }
+            }
+          }
+
+          for (let b = bullets.length - 1; b >= 0; b--) {
+            const bx = bullets[b].x, by = bullets[b].y;
+            if (bx > mb.x - mb.W / 2 && bx < mb.x + mb.W / 2 && by > mb.y - mb.H / 2 && by < mb.y + mb.H / 2) {
+              bullets.splice(b, 1); mb.hp--; mb.flash = 6;
+              explosions.push(...createExplosion(bx, by, 3));
+              if (mb.hp <= 0) mb.alive = false;
+              break;
+            }
+          }
+
+          const mbShielded = s.powerUps.SHIELD > 0;
+          if (player.invincible <= 0 && !mbShielded && mb.alive && Math.abs(mb.x - player.x) < (mb.W + SHIP_W) / 2 - 8 && Math.abs(mb.y - player.y) < (mb.H + SHIP_H) / 2 - 8) {
+            mb.alive = false;
+            player.invincible = 90; player.flash = 18;
+            player.health--;
+            if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+            explosions.push(...createExplosion(player.x, player.y, 10));
+            if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
+          }
+        }
+      }
+
       for (let i = explosions.length - 1; i >= 0; i--) {
         const ex = explosions[i];
         ex.x += ex.vx; ex.y += ex.vy;
@@ -664,6 +792,29 @@ function RetroSpaceGame({ onClose }) {
 
       if (s.bossActive && s.boss) { drawBoss(ctx, s.boss); drawBossHpBar(ctx, s.boss, W); }
       else { drawLevelTimer(ctx, s.levelTimer, LEVEL_DURATION, W); }
+
+      if (s.miniBossActive && s.miniBoss) {
+        drawMiniBoss(ctx, s.miniBoss);
+        const mb = s.miniBoss;
+        const mbPct = mb.hp / mb.maxHp;
+        const mbBarW = Math.min(W * 0.35, 280);
+        const mbBarH = 5;
+        const mbBx = (W - mbBarW) / 2;
+        const mbBy = 44;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(mbBx, mbBy, mbBarW, mbBarH);
+        const mbColor = mbPct > 0.6 ? '#ff4444' : mbPct > 0.3 ? '#ff8800' : '#ffcc00';
+        ctx.fillStyle = mbColor;
+        ctx.shadowColor = mbColor;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(mbBx, mbBy, mbBarW * mbPct, mbBarH);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = "bold 8px 'Courier New', monospace";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`💀 ${mb.name}${mb.phase === 2 ? ' — ENRAGED' : ''}`, W / 2, mbBy - 2);
+      }
 
       if (bannerRef.current && bannerRef.current.timer > 0) {
         const bn = bannerRef.current;

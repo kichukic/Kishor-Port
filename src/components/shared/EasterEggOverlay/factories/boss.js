@@ -1,4 +1,4 @@
-import { BOSS_DEFS, ENEMY_BULLET_SPEED } from '../constants';
+import { BOSS_DEFS, MINI_BOSS_DEFS, ENEMY_BULLET_SPEED } from '../constants';
 
 export function spawnBoss(W, level) {
   const defIdx = (level - 1) % BOSS_DEFS.length;
@@ -25,5 +25,34 @@ export function spawnBoss(W, level) {
     alive: true,
     tier,
     flash: 0,
+  };
+}
+
+export function spawnMiniBoss(W, wave) {
+  const defIdx = (wave - 1) % MINI_BOSS_DEFS.length;
+  const def = MINI_BOSS_DEFS[defIdx];
+  const tier = Math.floor((wave - 1) / MINI_BOSS_DEFS.length);
+  return {
+    x: W / 2,
+    y: -def.H,
+    vx: def.speed,
+    vy: def.speed * 0.6,
+    hp: def.hp + tier * 40,
+    maxHp: def.hp + tier * 40,
+    score: def.score + tier * 200,
+    name: def.name,
+    color: def.color,
+    W: def.W, H: def.H,
+    attack: def.attack,
+    timer: 0,
+    shootTimer: 60,
+    phase: 1,
+    entering: true,
+    alive: true,
+    tier,
+    flash: 0,
+    isMini: true,
+    tentaclePhase: 0,
+    eyeGlow: 0,
   };
 }

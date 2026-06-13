@@ -1,6 +1,220 @@
 import { shadeColor } from './enemy';
 import { BOSS_DEFS } from '../constants';
 
+export function drawMiniBoss(ctx, boss) {
+  const { x, y, W: BW, H: BH, color, hp, maxHp, timer, flash } = boss;
+  const t = Date.now() / 200;
+  const pulse = 0.8 + 0.2 * Math.sin(t);
+  const rage = hp <= maxHp * 0.5;
+  const isFlashing = flash > 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
+  ctx.shadowBlur = 25 + 12 * pulse;
+
+  // ── TENTACLES (behind body) ──
+  const tentCount = 6;
+  for (let i = 0; i < tentCount; i++) {
+    const baseAngle = (i / tentCount) * Math.PI * 2 + timer * 0.008;
+    const len = BW * 0.5 + Math.sin(timer * 0.03 + i * 1.2) * 12;
+
+    ctx.strokeStyle = isFlashing ? '#ffffff' : shadeColor(color, -20);
+    ctx.lineWidth = 3.5 - i * 0.3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+
+    const segments = 8;
+    for (let s = 0; s <= segments; s++) {
+      const seg = s / segments;
+      const wobble = Math.sin(timer * 0.06 + i * 0.9 + seg * 3) * (10 + seg * 14);
+      const tx = Math.cos(baseAngle) * len * seg + wobble * Math.cos(baseAngle + Math.PI / 2);
+      const ty = Math.sin(baseAngle) * len * seg * 0.6 + wobble * Math.sin(baseAngle + Math.PI / 2);
+      if (s === 0) ctx.moveTo(tx, ty);
+      else ctx.lineTo(tx, ty);
+    }
+    ctx.stroke();
+
+    // tentacle tip glow
+    const tipWobble = Math.sin(timer * 0.06 + i * 0.9 + 3) * (10 + 14);
+    const tipX = Math.cos(baseAngle) * len + tipWobble * Math.cos(baseAngle + Math.PI / 2);
+    const tipY = Math.sin(baseAngle) * len * 0.6 + tipWobble * Math.sin(baseAngle + Math.PI / 2);
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff2222' : shadeColor(color, 30));
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // ── MAIN BODY — organic alien hull ──
+  ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#4a0000' : shadeColor(color, -15));
+  ctx.beginPath();
+  ctx.moveTo(0, -BH * 0.45);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const wobbleR = 1 + Math.sin(timer * 0.02 + a * 3) * 0.08;
+    const rx = BW * 0.42 * wobbleR;
+    const ry = BH * 0.38 * wobbleR;
+    const px = Math.cos(a) * rx;
+    const py = Math.sin(a) * ry;
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // body shell shading
+  let bodyGrad = ctx.createRadialGradient(-BW * 0.1, -BH * 0.1, BW * 0.05, 0, 0, BW * 0.45);
+  bodyGrad.addColorStop(0, isFlashing ? '#ffffff' : shadeColor(color, 30));
+  bodyGrad.addColorStop(0.5, isFlashing ? '#ffffff' : color);
+  bodyGrad.addColorStop(1, isFlashing ? '#ffffff' : shadeColor(color, -40));
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, BW * 0.38, BH * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── ARMORED PLATES ──
+  ctx.strokeStyle = isFlashing ? '#ffffff' : shadeColor(color, -30);
+  ctx.lineWidth = 1.8;
+  for (let i = 0; i < 5; i++) {
+    const plateA = (i / 5) * Math.PI * 2 + timer * 0.005;
+    const pr = BW * 0.22;
+    ctx.beginPath();
+    ctx.arc(Math.cos(plateA) * pr * 0.5, Math.sin(plateA) * pr * 0.5, BW * 0.1, plateA - 0.6, plateA + 0.6);
+    ctx.stroke();
+  }
+
+  // ── MOUTH / MAW ──
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.ellipse(0, BH * 0.08, BW * 0.12, BH * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const mawGlow = isFlashing ? '#ffffff' : (rage ? '#ff0000' : '#ff4444');
+  ctx.fillStyle = mawGlow;
+  ctx.shadowColor = mawGlow;
+  ctx.shadowBlur = 12 + 4 * pulse;
+  ctx.beginPath();
+  ctx.ellipse(0, BH * 0.08, BW * 0.08, BH * 0.06, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // teeth
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowBlur = 0;
+  const teethCount = 8;
+  for (let i = 0; i < teethCount; i++) {
+    const ta = (i / teethCount) * Math.PI * 2;
+    const tx = Math.cos(ta) * BW * 0.11;
+    const ty = BH * 0.08 + Math.sin(ta) * BH * 0.08;
+    const tLen = 3 + Math.sin(timer * 0.1 + i) * 1.5;
+    const tAngle = ta + Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx + Math.cos(tAngle - 0.3) * tLen, ty + Math.sin(tAngle - 0.3) * tLen);
+    ctx.lineTo(tx + Math.cos(tAngle + 0.3) * tLen, ty + Math.sin(tAngle + 0.3) * tLen);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ── EYES (3 menacing eyes) ──
+  const eyePositions = [
+    { ex: -BW * 0.16, ey: -BH * 0.12, r: BW * 0.07 },
+    { ex: BW * 0.16,  ey: -BH * 0.12, r: BW * 0.07 },
+    { ex: 0,          ey: -BH * 0.22, r: BW * 0.055 },
+  ];
+
+  for (const eye of eyePositions) {
+    // eye socket
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(eye.ex, eye.ey, eye.r * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // iris
+    let eyeGrad = ctx.createRadialGradient(eye.ex, eye.ey, 0, eye.ex, eye.ey, eye.r);
+    eyeGrad.addColorStop(0, isFlashing ? '#ffffff' : '#ffffff');
+    eyeGrad.addColorStop(0.25, isFlashing ? '#ffffff' : (rage ? '#ff0000' : '#ff4444'));
+    eyeGrad.addColorStop(0.6, isFlashing ? '#ffffff' : shadeColor(color, 20));
+    eyeGrad.addColorStop(1, '#000000');
+    ctx.fillStyle = eyeGrad;
+    ctx.beginPath();
+    ctx.arc(eye.ex, eye.ey, eye.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // pupil — tracks player loosely
+    const pupilOffX = Math.sin(timer * 0.02) * eye.r * 0.25;
+    const pupilOffY = Math.cos(timer * 0.025) * eye.r * 0.2;
+    ctx.fillStyle = isFlashing ? '#ff4444' : '#000000';
+    ctx.beginPath();
+    ctx.arc(eye.ex + pupilOffX, eye.ey + pupilOffY, eye.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // eye highlight
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(eye.ex - eye.r * 0.2, eye.ey - eye.r * 0.25, eye.r * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // eye glow ring
+    ctx.strokeStyle = isFlashing ? '#ffffff' : (rage ? 'rgba(255,0,0,0.5)' : `rgba(255,80,80,${0.3 + 0.2 * pulse})`);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(eye.ex, eye.ey, eye.r + 3 + Math.sin(t * 3 + eye.ex) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // ── CORE ENERGY (glowing center) ──
+  const coreR = BW * 0.08;
+  let coreGrad = ctx.createRadialGradient(0, -BH * 0.05, 0, 0, -BH * 0.05, coreR * 2);
+  coreGrad.addColorStop(0, isFlashing ? '#ffffff' : '#ffffff');
+  coreGrad.addColorStop(0.2, isFlashing ? '#ffffff' : (rage ? '#ff0000' : '#ff6666'));
+  coreGrad.addColorStop(0.5, isFlashing ? '#ffffff' : shadeColor(color, 40));
+  coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
+  ctx.shadowBlur = 20 + 8 * pulse;
+  ctx.beginPath();
+  ctx.arc(0, -BH * 0.05, coreR * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // core center
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, -BH * 0.05, coreR * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // ── SPINE RIDGES ──
+  ctx.strokeStyle = isFlashing ? '#ffffff' : shadeColor(color, 20);
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 7; i++) {
+    const sy = -BH * 0.35 + i * BH * 0.1;
+    const sw = BW * 0.08 + Math.sin(timer * 0.04 + i * 0.7) * 2;
+    ctx.beginPath();
+    ctx.moveTo(-sw, sy);
+    ctx.lineTo(0, sy - 4);
+    ctx.lineTo(sw, sy);
+    ctx.stroke();
+  }
+
+  // ── RAGE AURA (phase 2) ──
+  if (rage) {
+    ctx.strokeStyle = `rgba(255,0,0,${0.4 + 0.3 * Math.sin(t * 3)})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, BW * 0.5 + 8 + 4 * Math.sin(t * 4), 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(255,0,0,${0.2 + 0.15 * Math.sin(t * 5)})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, BW * 0.6 + 6 * Math.sin(t * 2), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 export function drawBoss(ctx, boss) {
   const { x, y, W: BW, H: BH, color, hp, maxHp, phase, timer, flash, shape } = boss;
   const t = Date.now() / 200;

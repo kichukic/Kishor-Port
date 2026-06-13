@@ -60,6 +60,21 @@ export const PU = {
 };
 export const PU_KEYS = Object.keys(PU);
 
+export const MINI_BOSS_DEFS = [
+  { name: 'ABOMINATION',     hp: 80,  score: 300,  color: '#7f1d1d', W: 80,  H: 70,  speed: 1.2, attack: 'sweep' },
+  { name: 'HORROR MAW',      hp: 100, score: 400,  color: '#991b1b', W: 90,  H: 75,  speed: 1.0, attack: 'spiral' },
+  { name: 'VOID STALKER',    hp: 90,  score: 350,  color: '#4c1d95', W: 85,  H: 65,  speed: 1.4, attack: 'burst' },
+  { name: 'FLESH TITAN',     hp: 120, score: 500,  color: '#78350f', W: 95,  H: 80,  speed: 0.9, attack: 'ring' },
+  { name: 'ABYSSAL QUEEN',   hp: 110, score: 450,  color: '#1e1b4b', W: 88,  H: 72,  speed: 1.3, attack: 'sweep' },
+  { name: 'COSMIC WRAITH',   hp: 95,  score: 380,  color: '#581c87', W: 82,  H: 68,  speed: 1.5, attack: 'targeted' },
+  { name: 'PLAGUE LORD',     hp: 130, score: 550,  color: '#064e3b', W: 98,  H: 82,  speed: 0.8, attack: 'spiral' },
+  { name: 'ENTROPY MAW',     hp: 105, score: 420,  color: '#450a0a', W: 86,  H: 70,  speed: 1.1, attack: 'burst' },
+  { name: 'NULL SERPENT',    hp: 115, score: 480,  color: '#1e3a5f', W: 92,  H: 78,  speed: 1.2, attack: 'ring' },
+  { name: 'DREAD PHANTOM',   hp: 140, score: 600,  color: '#3f3f46', W: 100, H: 85,  speed: 1.0, attack: 'sweep' },
+  { name: 'OBLIVION SPAWN',  hp: 125, score: 520,  color: '#7c2d12', W: 94,  H: 76,  speed: 1.1, attack: 'targeted' },
+  { name: 'CHAOS DEVOURER',  hp: 150, score: 650,  color: '#1c1917', W: 105, H: 90,  speed: 0.9, attack: 'spiral' },
+];
+
 export const ENEMY_DEFS = [
   { name: 'Scout',          hp: 1, speed: 1.5, color: '#94a3b8', shape: 'tri',     move: 'straight', power: 'normal' },
   { name: 'Drifter',        hp: 1, speed: 1.2, color: '#38bdf8', shape: 'saucer',  move: 'sine',     power: 'normal' },
