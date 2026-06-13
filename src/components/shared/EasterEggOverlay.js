@@ -244,7 +244,7 @@ const BadgeDot = styled.span`
    ════════════════════════════════════════════ */
 const SHIP_W = 32, SHIP_H = 28;
 const ENEMY_W = 28, ENEMY_H = 22;
-const PLAYER_SPEED = 5;
+const PLAYER_SPEED = 8;
 const BULLET_SPEED = 9;
 const MISSILE_SPEED = 6;
 const ENEMY_BULLET_SPEED = 3.5;
