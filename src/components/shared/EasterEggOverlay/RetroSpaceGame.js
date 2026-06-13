@@ -98,10 +98,24 @@ function RetroSpaceGame({ onClose }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    let initialized = false;
     const resize = () => {
+      const prevW = canvas.width;
+      const prevH = canvas.height;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initGame();
+      if (!initialized) {
+        initialized = true;
+        initGame();
+      } else {
+        const s = stateRef.current;
+        if (s) {
+          s.W = canvas.width;
+          s.H = canvas.height;
+          s.stars = createStars(s.W, s.H);
+          s.asteroids = createAsteroids(s.W, s.H);
+        }
+      }
     };
     resize();
     window.addEventListener('resize', resize);
