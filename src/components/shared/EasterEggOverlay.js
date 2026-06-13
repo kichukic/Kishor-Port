@@ -251,14 +251,47 @@ const ENEMY_BULLET_SPEED = 3.5;
 const MAX_LIVES = 3;
 const BASE_SHOOT_COOLDOWN = 220;
 const CRATE_W = 26, CRATE_H = 26;
-const POWERUP_DURATION = 600;
-const WAVES_PER_LEVEL = 3;   // boss every 3 waves
+const LEVEL_DURATION = 7200; // 2 minutes (120 seconds * 60 FPS)
+const WAVES_PER_LEVEL = 3;   // wave formatting reference
+const POWERUP_DURATION = 600; // 10 seconds (600 frames at 60 FPS)
 
 // Boss configs indexed by level (cycles)
 const BOSS_DEFS = [
-  { name: 'SENTINEL',  hp: 20, score: 200, color: '#ff4444', W: 72, H: 52, speed: 1.4 },
-  { name: 'DESTROYER', hp: 35, score: 400, color: '#ff8800', W: 84, H: 64, speed: 1.8 },
-  { name: 'OVERLORD',  hp: 55, score: 600, color: '#cc44ff', W: 96, H: 76, speed: 2.2 },
+  { name: 'SENTINEL',    hp: 65,  score: 200,  color: '#ff4444', W: 72,  H: 52,  speed: 1.4, shape: 'saucer',      move: 'sweep',     attack: 'spread' },
+  { name: 'DESTROYER',   hp: 110, score: 400,  color: '#ff8800', W: 84,  H: 64,  speed: 1.8, shape: 'destroyer',   move: 'sine',      attack: 'burst' },
+  { name: 'OVERLORD',    hp: 175, score: 600,  color: '#cc44ff', W: 96,  H: 76,  speed: 2.2, shape: 'overlord',    move: 'figure8',   attack: 'spiral' },
+  { name: 'VORTEX',      hp: 240, score: 800,  color: '#00f5ff', W: 80,  H: 80,  speed: 2.0, shape: 'vortex',      move: 'butterfly', attack: 'pods' },
+  { name: 'DOOMBRINGER', hp: 320, score: 1000, color: '#ff0055', W: 110, H: 90,  speed: 1.2, shape: 'heavy',       move: 'bounce',    attack: 'sweep' },
+  { name: 'ARMAGEDDON',  hp: 380, score: 1200, color: '#eab308', W: 100, H: 100, speed: 1.5, shape: 'star',        move: 'circle',    attack: 'ring' },
+  { name: 'TEMPEST',     hp: 440, score: 1400, color: '#06b6d4', W: 90,  H: 80,  speed: 2.4, shape: 'spikey',      move: 'sine',      attack: 'targeted' },
+  { name: 'GOLIATH',     hp: 500, score: 1600, color: '#f97316', W: 115, H: 95,  speed: 1.1, shape: 'heavy',       move: 'sweep',     attack: 'comb' },
+  { name: 'LEVIATHAN',   hp: 570, score: 1800, color: '#3b82f6', W: 120, H: 100, speed: 1.3, shape: 'carrier',     move: 'figure8',   attack: 'pods' },
+  { name: 'HYPERION',    hp: 640, score: 2000, color: '#a855f7', W: 95,  H: 85,  speed: 1.9, shape: 'tri_fighter', move: 'butterfly', attack: 'burst' },
+  { name: 'APOCALYPSE',  hp: 720, score: 2200, color: '#ef4444', W: 110, H: 110, speed: 1.6, shape: 'star',        move: 'bounce',    attack: 'spiral' },
+  { name: 'OBLIVION',    hp: 800, score: 2400, color: '#ec4899', W: 85,  H: 85,  speed: 2.5, shape: 'orb',         move: 'circle',    attack: 'ring' },
+  { name: 'RAGNAROK',    hp: 880, score: 2600, color: '#f59e0b', W: 105, H: 95,  speed: 1.7, shape: 'spikey',      move: 'swoop',     attack: 'sweep' },
+  { name: 'PROMETHEUS',  hp: 960, score: 2800, color: '#10b981', W: 95,  H: 95,  speed: 2.1, shape: 'destroyer',   move: 'sweep',     attack: 'comb' },
+  { name: 'VALKYRIE',    hp: 1050, score: 3000, color: '#06b6d4', W: 80,  H: 70,  speed: 2.7, shape: 'tri_fighter', move: 'sine',      attack: 'targeted' },
+  { name: 'NEMESIS',     hp: 1150, score: 3200, color: '#8b5cf6', W: 90,  H: 90,  speed: 2.0, shape: 'vortex',      move: 'figure8',   attack: 'spiral' },
+  { name: 'ECLIPSE',     hp: 1250, score: 3400, color: '#64748b', W: 100, H: 80,  speed: 1.8, shape: 'saucer',      move: 'circle',    attack: 'ring' },
+  { name: 'TITAN',       hp: 1360, score: 3600, color: '#d97706', W: 115, H: 105, speed: 1.3, shape: 'heavy',       move: 'bounce',    attack: 'burst' },
+  { name: 'KRAKEN',      hp: 1480, score: 3800, color: '#0284c7', W: 120, H: 100, speed: 1.5, shape: 'carrier',     move: 'swoop',     attack: 'pods' },
+  { name: 'BEHEMOTH',    hp: 1600, score: 4000, color: '#dc2626', W: 130, H: 110, speed: 1.0, shape: 'heavy',       move: 'sweep',     attack: 'sweep' },
+  { name: 'CENTURION',   hp: 1720, score: 4200, color: '#4f46e5', W: 95,  H: 85,  speed: 2.2, shape: 'destroyer',   move: 'butterfly', attack: 'targeted' },
+  { name: 'DREADNOUGHT', hp: 1850, score: 4400, color: '#b91c1c', W: 120, H: 100, speed: 1.2, shape: 'heavy',       move: 'bounce',    attack: 'comb' },
+  { name: 'ZEUS',        hp: 1980, score: 4600, color: '#eab308', W: 100, H: 100, speed: 2.3, shape: 'star',        move: 'figure8',   attack: 'spiral' },
+  { name: 'ODIN',        hp: 2120, score: 4800, color: '#38bdf8', W: 105, H: 95,  speed: 2.0, shape: 'overlord',    move: 'sine',      attack: 'pods' },
+  { name: 'CHIMERA',     hp: 2260, score: 5000, color: '#a855f7', W: 90,  H: 90,  speed: 2.4, shape: 'vortex',      move: 'circle',    attack: 'ring' },
+  { name: 'SPECTRE',     hp: 2400, score: 5200, color: '#94a3b8', W: 85,  H: 75,  speed: 2.6, shape: 'saucer',      move: 'butterfly', attack: 'burst' },
+  { name: 'PHANTOM',     hp: 2550, score: 5400, color: '#c084fc', W: 80,  H: 80,  speed: 2.8, shape: 'orb',         move: 'sine',      attack: 'targeted' },
+  { name: 'WRAITH',      hp: 2700, score: 5600, color: '#22d3ee', W: 85,  H: 75,  speed: 2.7, shape: 'tri_fighter', move: 'figure8',   attack: 'pods' },
+  { name: 'BANSHEE',     hp: 2860, score: 5800, color: '#f43f5e', W: 90,  H: 80,  speed: 2.5, shape: 'spikey',      move: 'swoop',     attack: 'sweep' },
+  { name: 'REAPER',      hp: 3020, score: 6000, color: '#4b5563', W: 100, H: 90,  speed: 1.9, shape: 'star',        move: 'sweep',     attack: 'spiral' },
+  { name: 'HARBINGER',   hp: 3190, score: 6200, color: '#ea580c', W: 110, H: 95,  speed: 1.6, shape: 'destroyer',   move: 'bounce',    attack: 'comb' },
+  { name: 'VANGUARD',    hp: 3360, score: 6400, color: '#16a34a', W: 95,  H: 85,  speed: 2.1, shape: 'tri_fighter', move: 'sine',      attack: 'burst' },
+  { name: 'DEVASTATOR',  hp: 3540, score: 6600, color: '#e11d48', W: 120, H: 105, speed: 1.3, shape: 'heavy',       move: 'figure8',   attack: 'ring' },
+  { name: 'CONQUEROR',   hp: 3720, score: 6800, color: '#4f46e5', W: 115, H: 100, speed: 1.5, shape: 'carrier',     move: 'butterfly', attack: 'pods' },
+  { name: 'INFINITY',    hp: 4000, score: 8000, color: '#06b6d4', W: 125, H: 110, speed: 1.8, shape: 'swoop',     attack: 'spiral' },
 ];
 
 // Power-up types
@@ -268,6 +301,65 @@ const PU = {
   SHIELD:    { label: 'SHIELD',    color: '#ff44ff', icon: '◉' },
 };
 const PU_KEYS = Object.keys(PU);
+
+// 55 Unique enemy configurations
+const ENEMY_DEFS = [
+  { name: 'Scout',          hp: 1, speed: 1.5, color: '#94a3b8', shape: 'tri',     move: 'straight', power: 'normal' },
+  { name: 'Drifter',        hp: 1, speed: 1.2, color: '#38bdf8', shape: 'saucer',  move: 'sine',     power: 'normal' },
+  { name: 'Interceptor',    hp: 2, speed: 2.2, color: '#f59e0b', shape: 'diamond', move: 'chase',    power: 'normal' },
+  { name: 'Void Striker',   hp: 1, speed: 3.0, color: '#8b5cf6', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Shield Drone',   hp: 3, speed: 1.0, color: '#ec4899', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Twin Gunner',    hp: 2, speed: 1.4, color: '#ef4444', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Kamikaze',       hp: 1, speed: 3.5, color: '#dc2626', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Ghost',          hp: 2, speed: 1.8, color: '#cbd5e1', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Bomber',         hp: 3, speed: 1.1, color: '#f97316', shape: 'heavy',   move: 'straight', power: 'bomb' },
+  { name: 'Weaver Swarm',   hp: 1, speed: 1.6, color: '#a855f7', shape: 'tri',     move: 'sine',     power: 'splitter' },
+  { name: 'Aegis Sentinel', hp: 4, speed: 0.9, color: '#22d3ee', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Striker X',      hp: 2, speed: 2.5, color: '#eab308', shape: 'cross',    move: 'zigzag',   power: 'normal' },
+  { name: 'Star Swarmer',   hp: 1, speed: 1.8, color: '#10b981', shape: 'spikey',   move: 'wobble',   power: 'normal' },
+  { name: 'Vortex Scout',   hp: 2, speed: 2.0, color: '#06b6d4', shape: 'saucer',  move: 'sine',     power: 'spread' },
+  { name: 'Hellbound',      hp: 3, speed: 2.2, color: '#ff0055', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Apex Drone',     hp: 3, speed: 1.5, color: '#8b5cf6', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Doom Seeker',    hp: 2, speed: 2.1, color: '#ef4444', shape: 'diamond', move: 'chase',    power: 'bomb' },
+  { name: 'Void Weaver',    hp: 2, speed: 1.7, color: '#a855f7', shape: 'saucer',  move: 'sine',     power: 'spread' },
+  { name: 'Nova Striker',   hp: 1, speed: 3.2, color: '#f43f5e', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Shield Swarm',   hp: 2, speed: 1.3, color: '#00f5ff', shape: 'orb',     move: 'wobble',   power: 'shielded' },
+  { name: 'Blink Fighter',  hp: 2, speed: 2.0, color: '#fcd34d', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Carrier Escort', hp: 4, speed: 1.1, color: '#38bdf8', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Splitter Pod',   hp: 3, speed: 1.4, color: '#10b981', shape: 'saucer',  move: 'sine',     power: 'splitter' },
+  { name: 'Spectre Sentry', hp: 2, speed: 1.9, color: '#94a3b8', shape: 'cross',    move: 'wobble',   power: 'rear_shot' },
+  { name: 'Apocalypse Fly', hp: 2, speed: 2.8, color: '#dc2626', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Solar Drone',    hp: 2, speed: 2.0, color: '#f59e0b', shape: 'spikey',   move: 'sine',     power: 'spread' },
+  { name: 'Nebula Weaver',  hp: 3, speed: 1.3, color: '#a855f7', shape: 'saucer',  move: 'wobble',   power: 'splitter' },
+  { name: 'Shadow Drone',   hp: 3, speed: 1.8, color: '#64748b', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Obsidian Orb',   hp: 5, speed: 0.8, color: '#111827', shape: 'orb',     move: 'straight', power: 'shielded' },
+  { name: 'Heavy Blast',    hp: 4, speed: 1.2, color: '#ef4444', shape: 'heavy',   move: 'sine',     power: 'bomb' },
+  { name: 'Pulsar Scout',   hp: 1, speed: 2.4, color: '#0ea5e9', shape: 'tri',     move: 'zigzag',   power: 'normal' },
+  { name: 'Quasar Fighter', hp: 3, speed: 2.0, color: '#ec4899', shape: 'diamond', move: 'chase',    power: 'normal' },
+  { name: 'Avenger Pod',    hp: 3, speed: 1.6, color: '#10b981', shape: 'saucer',  move: 'sine',     power: 'rear_shot' },
+  { name: 'Revenant Fly',   hp: 2, speed: 3.1, color: '#d97706', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Valkyrie Guard', hp: 4, speed: 1.5, color: '#22d3ee', shape: 'cross',    move: 'wobble',   power: 'spread' },
+  { name: 'Titan Swarm',    hp: 3, speed: 1.3, color: '#8b5cf6', shape: 'heavy',   move: 'straight', power: 'splitter' },
+  { name: 'Gladiator Orb',  hp: 4, speed: 1.1, color: '#f43f5e', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Warlock Pod',    hp: 3, speed: 1.7, color: '#b91c1c', shape: 'saucer',  move: 'chase',    power: 'bomb' },
+  { name: 'Sonic Dasher',   hp: 2, speed: 3.4, color: '#06b6d4', shape: 'tri',     move: 'dash',     power: 'suicide' },
+  { name: 'Eclipse Sentry', hp: 3, speed: 1.8, color: '#4b5563', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Solar Flare',    hp: 2, speed: 2.3, color: '#f59e0b', shape: 'spikey',   move: 'sine',     power: 'spread' },
+  { name: 'Nova Fighter',   hp: 3, speed: 2.2, color: '#eab308', shape: 'tri',     move: 'chase',    power: 'double' },
+  { name: 'Neutron Guard',  hp: 5, speed: 1.0, color: '#0ea5e9', shape: 'heavy',   move: 'straight', power: 'shielded' },
+  { name: 'Nebula Sentry',  hp: 3, speed: 1.5, color: '#a855f7', shape: 'saucer',  move: 'wobble',   power: 'rear_shot' },
+  { name: 'Comet Dasher',   hp: 2, speed: 3.6, color: '#dc2626', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Apex Predator',  hp: 4, speed: 1.9, color: '#ec4899', shape: 'diamond', move: 'chase',    power: 'spread' },
+  { name: 'Warlord Drone',  hp: 5, speed: 1.2, color: '#b91c1c', shape: 'heavy',   move: 'sine',     power: 'double' },
+  { name: 'Goliath Heavy',  hp: 6, speed: 0.9, color: '#f97316', shape: 'heavy',   move: 'straight', power: 'bomb' },
+  { name: 'Tyrant Striker', hp: 3, speed: 2.7, color: '#d97706', shape: 'tri',     move: 'zigzag',   power: 'normal' },
+  { name: 'Chaos Weaver',   hp: 3, speed: 1.8, color: '#8b5cf6', shape: 'saucer',  move: 'sine',     power: 'splitter' },
+  { name: 'Apocalypse Guard',hp: 5, speed: 1.4, color: '#ef4444', shape: 'orb',     move: 'wobble',   power: 'shielded' },
+  { name: 'Omega Intercept', hp: 3, speed: 3.0, color: '#00f5ff', shape: 'diamond', move: 'chase',    power: 'suicide' },
+  { name: 'Quantum Void',   hp: 4, speed: 2.1, color: '#a855f7', shape: 'cross',    move: 'zigzag',   power: 'teleport' },
+  { name: 'Infinity Sentry',hp: 6, speed: 1.5, color: '#38bdf8', shape: 'heavy',   move: 'sine',     power: 'double' },
+  { name: 'Nemesis Drone',  hp: 4, speed: 2.3, color: '#ff0055', shape: 'spikey',   move: 'chase',    power: 'spread' },
+];
 
 
 /* ════════════════════════════════════════════
@@ -284,29 +376,53 @@ function createStars(W, H, count = 120) {
 }
 
 function spawnEnemy(W, H, wave) {
+  const maxIdx = Math.min(ENEMY_DEFS.length, 6 + wave * 3);
+  const defIdx = Math.floor(Math.random() * maxIdx);
+  const def = ENEMY_DEFS[defIdx];
+
   const edge = Math.random();
-  const speed = 1.2 + wave * 0.18 + Math.random() * 0.7;
-  let x, y, vx, vy, type;
-  type = Math.floor(Math.random() * 3);
+  const speed = def.speed * (1 + wave * 0.04) + Math.random() * 0.4;
+  let x, y, vx, vy;
 
   if (edge < 0.5) {
     x = 40 + Math.random() * (W - 80);
-    y = -ENEMY_H - 10;
-    vx = (Math.random() - 0.5) * speed * 1.2;
+    y = -30;
+    vx = (Math.random() - 0.5) * speed * 0.5;
     vy = speed;
   } else if (edge < 0.75) {
-    x = -ENEMY_W - 10;
-    y = 80 + Math.random() * (H * 0.6);
-    vx = speed * 1.1;
-    vy = (Math.random() - 0.3) * speed * 0.7;
+    x = -30;
+    y = 80 + Math.random() * (H * 0.45);
+    vx = speed * 0.9;
+    vy = (Math.random() - 0.3) * speed * 0.4;
   } else {
-    x = W + ENEMY_W + 10;
-    y = 80 + Math.random() * (H * 0.6);
-    vx = -speed * 1.1;
-    vy = (Math.random() - 0.3) * speed * 0.7;
+    x = W + 30;
+    y = 80 + Math.random() * (H * 0.45);
+    vx = -speed * 0.9;
+    vy = (Math.random() - 0.3) * speed * 0.4;
   }
 
-  return { x, y, vx, vy, type, hp: type === 2 ? 2 : 1, timer: 0, shootTimer: 80 + Math.random() * 200, alive: true };
+  if (def.move === 'zigzag') {
+    vx = (Math.random() > 0.5 ? 1 : -1) * speed * 0.8;
+  } else if (def.move === 'chase' || def.move === 'dash') {
+    vx = 0;
+  }
+
+  return {
+    name: def.name,
+    x, y,
+    vx, vy,
+    baseSpeed: speed,
+    hp: def.hp,
+    maxHp: def.hp,
+    color: def.color,
+    shape: def.shape,
+    move: def.move,
+    power: def.power,
+    timer: 0,
+    shootTimer: 60 + Math.random() * 160,
+    shield: def.power === 'shielded' ? 1 : 0,
+    alive: true,
+  };
 }
 
 function spawnCrate(W) {
@@ -337,78 +453,267 @@ function createExplosion(x, y, count = 14) {
 }
 
 /* ─── DRAW: Ship ─── */
-function drawShip(ctx, x, y, flash, shielded) {
+function drawShip(ctx, x, y, flash, shielded, vx = 0, vy = 0) {
   ctx.save();
   ctx.translate(x, y);
 
+  // Bank (roll) angle based on horizontal velocity vx
+  const rollAngle = vx * 0.04; 
+  ctx.rotate(rollAngle);
+
+  const isFlashing = flash;
+  const time = Date.now();
+  const flamePulse = 1 + 0.3 * Math.sin(time / 40);
+  // vy influence (thrust gets slightly longer when moving forward, smaller backward)
+  const vyFactor = vy < 0 ? 1.4 : (vy > 0 ? 0.6 : 1.0);
+  const flameLength = (8 + Math.random() * 6) * flamePulse * vyFactor;
+
+  // 1. ENGINE THRUSTERS & FLAMES
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(-6, SHIP_H / 2 - 4, 3, 5); // left nozzle
+  ctx.fillRect(3, SHIP_H / 2 - 4, 3, 5);  // right nozzle
+
+  // Left Engine Flame
+  let gradFlame = ctx.createLinearGradient(0, SHIP_H / 2, 0, SHIP_H / 2 + flameLength);
+  gradFlame.addColorStop(0, 'rgba(0, 240, 255, 1)');     // Hot cyan core
+  gradFlame.addColorStop(0.3, 'rgba(0, 100, 255, 0.8)'); // Deep blue
+  gradFlame.addColorStop(1, 'rgba(0, 0, 255, 0)');        // Fade out
+  
+  ctx.fillStyle = isFlashing ? 'rgba(255, 50, 50, 0.8)' : gradFlame;
+  ctx.shadowColor = isFlashing ? '#ff0000' : '#00aaff';
+  ctx.shadowBlur = 12;
+  
+  ctx.beginPath();
+  ctx.ellipse(-4.5, SHIP_H / 2 + 1, 3, flameLength, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Right Engine Flame
+  ctx.beginPath();
+  ctx.ellipse(4.5, SHIP_H / 2 + 1, 3, flameLength, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner white hot core
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(-4.5, SHIP_H / 2 + 1, 1.2, flameLength * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(4.5, SHIP_H / 2 + 1, 1.2, flameLength * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. SHIELD EFFECT (drawn under ship hulls)
   if (shielded) {
-    const t = Date.now() / 200;
-    ctx.strokeStyle = `rgba(255,68,255,${0.5 + 0.3 * Math.sin(t)})`;
-    ctx.lineWidth = 2;
-    ctx.shadowColor = '#ff44ff';
-    ctx.shadowBlur = 14;
+    const shieldOsc = 0.5 + 0.3 * Math.sin(time / 150);
+    ctx.strokeStyle = `rgba(168, 85, 247, ${0.45 + 0.25 * Math.sin(time / 100)})`;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 15 + 7 * Math.sin(time / 120);
+    
+    // Draw outer energy circle
     ctx.beginPath();
-    ctx.arc(0, 0, SHIP_W / 2 + 6, 0, Math.PI * 2);
+    ctx.arc(0, 0, SHIP_W / 2 + 8, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.shadowBlur = 0;
+
+    // Draw inner thin hexagonal aura/rings
+    ctx.strokeStyle = `rgba(6, 182, 212, ${0.3 * shieldOsc})`;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    for (let j = 0; j < 6; j++) {
+      const angle = (j * Math.PI / 3) + (time * 0.001);
+      const rad = SHIP_W / 2 + 3;
+      const sx = Math.cos(angle) * rad;
+      const sy = Math.sin(angle) * rad;
+      if (j === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.stroke();
   }
 
-  ctx.fillStyle = flash ? 'rgba(255,80,80,0.9)' : '#ffffff';
-  ctx.shadowColor = '#ffffff';
-  ctx.shadowBlur = 10;
+  // 3. SHIP CHASSIS / METALLIC WINGS (Drawn on top)
+  let bodyGrad = ctx.createLinearGradient(-SHIP_W / 2, 0, SHIP_W / 2, 0);
+  if (isFlashing) {
+    bodyGrad.addColorStop(0, '#ff6666');
+    bodyGrad.addColorStop(0.5, '#ffaaaa');
+    bodyGrad.addColorStop(1, '#ff6666');
+  } else {
+    bodyGrad.addColorStop(0, '#1e293b'); // Dark slate wing base
+    bodyGrad.addColorStop(0.35, '#475569'); // Metallic slate gray
+    bodyGrad.addColorStop(0.5, '#f8fafc'); // Bright silver ridge highlight
+    bodyGrad.addColorStop(0.65, '#475569');
+    bodyGrad.addColorStop(1, '#1e293b');
+  }
 
+  ctx.fillStyle = bodyGrad;
+  ctx.shadowColor = isFlashing ? '#ff4444' : '#38bdf8';
+  ctx.shadowBlur = 8;
+
+  // Complex wing shape
   ctx.beginPath();
-  ctx.moveTo(0, -SHIP_H / 2);
-  ctx.lineTo(-SHIP_W / 2 + 4, SHIP_H / 2);
-  ctx.lineTo(-SHIP_W / 4, SHIP_H / 4);
-  ctx.lineTo(0, SHIP_H / 2 - 6);
-  ctx.lineTo(SHIP_W / 4, SHIP_H / 4);
-  ctx.lineTo(SHIP_W / 2 - 4, SHIP_H / 2);
+  ctx.moveTo(0, -SHIP_H / 2); // nose
+  ctx.lineTo(-6, -SHIP_H / 4); // left canopy shoulder
+  ctx.lineTo(-SHIP_W / 2, SHIP_H / 2 - 4); // left wingtip
+  ctx.lineTo(-SHIP_W / 4, SHIP_H / 4); // left wing notch
+  ctx.lineTo(-8, SHIP_H / 2 - 3); // left tail fin base
+  ctx.lineTo(0, SHIP_H / 2 - 8); // engine notch
+  ctx.lineTo(8, SHIP_H / 2 - 3); // right tail fin base
+  ctx.lineTo(SHIP_W / 4, SHIP_H / 4); // right wing notch
+  ctx.lineTo(SHIP_W / 2, SHIP_H / 2 - 4); // right wingtip
+  ctx.lineTo(6, -SHIP_H / 4); // right canopy shoulder
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = flash ? '#ff4444' : `rgba(180,220,255,${0.5 + 0.3 * Math.sin(Date.now() / 80)})`;
+  // 4. WINGTIP WEAPON PODS & LIGHTS
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(-SHIP_W / 2, SHIP_H / 2 - 12, 2.5, 8); // left gun barrel
+  ctx.fillRect(SHIP_W / 2 - 2.5, SHIP_H / 2 - 12, 2.5, 8); // right gun barrel
+
+  if (!isFlashing) {
+    ctx.shadowBlur = 8;
+    // Left Wingtip Light (Red)
+    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(-SHIP_W / 2 + 1.2, SHIP_H / 2 - 4, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Right Wingtip Light (Green)
+    ctx.fillStyle = '#22c55e';
+    ctx.shadowColor = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(SHIP_W / 2 - 1.2, SHIP_H / 2 - 4, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 5. CENTER FUSELAGE HIGHLIGHT PANEL
+  let accentGrad = ctx.createLinearGradient(0, -SHIP_H / 3, 0, SHIP_H / 3);
+  accentGrad.addColorStop(0, '#38bdf8'); // Glowing cyan
+  accentGrad.addColorStop(1, '#0284c7'); // Darker cyber blue
+  ctx.fillStyle = isFlashing ? '#ff0000' : accentGrad;
+  ctx.shadowColor = isFlashing ? '#ff0000' : '#0ea5e9';
+  ctx.shadowBlur = 6;
+  
   ctx.beginPath();
-  ctx.ellipse(0, SHIP_H / 2 - 3, 5, 4 + 2 * Math.abs(Math.sin(Date.now() / 80)), 0, 0, Math.PI * 2);
+  ctx.moveTo(0, -SHIP_H / 3);
+  ctx.lineTo(-3.5, -1);
+  ctx.lineTo(-2, SHIP_H / 6);
+  ctx.lineTo(0, SHIP_H / 4);
+  ctx.lineTo(2, SHIP_H / 6);
+  ctx.lineTo(3.5, -1);
+  ctx.closePath();
   ctx.fill();
+
+  // 6. GLASS CANOPY (Cockpit)
+  let canopyGrad = ctx.createLinearGradient(0, -10, 0, 4);
+  canopyGrad.addColorStop(0, '#38bdf8'); // Glowing neon cyan cockpit
+  canopyGrad.addColorStop(1, '#0369a1'); // Deep ocean blue base
+  ctx.fillStyle = isFlashing ? '#ff8888' : canopyGrad;
+  ctx.shadowColor = isFlashing ? '#ff4444' : '#38bdf8';
+  ctx.shadowBlur = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(-4, 0);
+  ctx.lineTo(-3, 4);
+  ctx.lineTo(3, 4);
+  ctx.lineTo(4, 0);
+  ctx.closePath();
+  ctx.fill();
+
   ctx.restore();
 }
 
-/* ─── DRAW: Enemy ─── */
 function drawEnemy(ctx, e) {
+  const { shape, color, hp, maxHp, timer, shield } = e;
+  const t = Date.now() / 200;
+  const pulse = 0.8 + 0.2 * Math.sin(t + e.x);
+
   ctx.save();
   ctx.translate(e.x, e.y);
-  const t = Date.now() / 300;
-  const pulse = 0.85 + 0.15 * Math.sin(t + e.x);
 
-  if (e.type === 0) {
-    ctx.fillStyle = `rgba(255,255,255,${pulse * 0.9})`;
-    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8;
+  // Outer glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8 + 4 * pulse;
+
+  // Active shield ring indicator
+  if (shield > 0) {
+    ctx.strokeStyle = '#00f5ff';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(0, 0, ENEMY_W / 2, ENEMY_H / 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,8,0.8)';
-    ctx.beginPath(); ctx.ellipse(0, -3, ENEMY_W / 4, ENEMY_H / 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = `rgba(255,255,255,${pulse * 0.4})`;
-    ctx.beginPath(); ctx.ellipse(0, -3, ENEMY_W / 8, ENEMY_H / 8, 0, 0, Math.PI * 2); ctx.fill();
-  } else if (e.type === 1) {
-    ctx.fillStyle = `rgba(200,200,255,${pulse})`;
-    ctx.shadowColor = '#aaaaff'; ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.moveTo(0, ENEMY_H / 2); ctx.lineTo(-ENEMY_W / 2, -ENEMY_H / 4);
-    ctx.lineTo(-ENEMY_W / 4, 0); ctx.lineTo(0, -ENEMY_H / 2);
-    ctx.lineTo(ENEMY_W / 4, 0); ctx.lineTo(ENEMY_W / 2, -ENEMY_H / 4);
-    ctx.closePath(); ctx.fill();
-  } else {
-    ctx.fillStyle = `rgba(255,200,100,${pulse})`;
-    ctx.shadowColor = '#ffcc44'; ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.moveTo(0, ENEMY_H / 2); ctx.lineTo(-ENEMY_W / 2, -ENEMY_H / 2);
-    ctx.lineTo(0, -ENEMY_H / 4); ctx.lineTo(ENEMY_W / 2, -ENEMY_H / 2);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < e.hp; i++) { ctx.beginPath(); ctx.arc(-3 + i * 6, -8, 2, 0, Math.PI * 2); ctx.fill(); }
+    ctx.arc(0, 0, ENEMY_W / 2 + 3.5, 0, Math.PI * 2);
+    ctx.stroke();
   }
+
+  ctx.fillStyle = color;
+
+  if (shape === 'tri') {
+    ctx.beginPath();
+    ctx.moveTo(0, ENEMY_H / 2);
+    ctx.lineTo(-ENEMY_W / 2, -ENEMY_H / 2);
+    ctx.lineTo(0, -ENEMY_H / 4);
+    ctx.lineTo(ENEMY_W / 2, -ENEMY_H / 2);
+    ctx.closePath();
+    ctx.fill();
+  } else if (shape === 'saucer') {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 2, ENEMY_H / 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, -2, ENEMY_W / 5.2, ENEMY_H / 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'diamond') {
+    ctx.beginPath();
+    ctx.moveTo(0, ENEMY_H / 2);
+    ctx.lineTo(-ENEMY_W / 2, 0);
+    ctx.lineTo(0, -ENEMY_H / 2);
+    ctx.lineTo(ENEMY_W / 2, 0);
+    ctx.closePath();
+    ctx.fill();
+  } else if (shape === 'orb') {
+    ctx.beginPath();
+    ctx.arc(0, 0, ENEMY_W / 2.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, ENEMY_W / 3.3, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (shape === 'spikey') {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4 + (timer * 0.02);
+      const r = i % 2 === 0 ? ENEMY_W / 2 : ENEMY_W / 3.5;
+      ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+  } else if (shape === 'heavy') {
+    ctx.fillRect(-ENEMY_W / 2, -ENEMY_H / 2, ENEMY_W / 3, ENEMY_H);
+    ctx.fillRect(ENEMY_W / 2 - ENEMY_W / 3, -ENEMY_H / 2, ENEMY_W / 3, ENEMY_H);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(-ENEMY_W / 4, -ENEMY_H / 3, ENEMY_W / 2, ENEMY_H * 0.6);
+  } else {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-ENEMY_W / 2.5, -ENEMY_H / 2.5);
+    ctx.lineTo(ENEMY_W / 2.5, ENEMY_H / 2.5);
+    ctx.moveTo(-ENEMY_W / 2.5, ENEMY_H / 2.5);
+    ctx.lineTo(ENEMY_W / 2.5, -ENEMY_H / 2.5);
+    ctx.stroke();
+  }
+
+  // HP Bar overlay for high HP targets
+  if (maxHp > 1 && hp > 0) {
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(-12, -ENEMY_H / 2 - 8, 24, 3);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(-12, -ENEMY_H / 2 - 8, 24 * (hp / maxHp), 3);
+  }
+
   ctx.restore();
 }
 
@@ -514,54 +819,59 @@ function spawnBoss(W, level) {
     y: -def.H,
     vx: def.speed * (1 + tier * 0.2),
     vy: def.speed * 0.5,
-    hp: def.hp + tier * 10,
-    maxHp: def.hp + tier * 10,
-    score: def.score + tier * 100,
+    hp: def.hp + tier * 100,
+    maxHp: def.hp + tier * 100,
+    score: def.score + tier * 500,
     name: def.name,
     color: def.color,
     W: def.W, H: def.H,
+    shape: def.shape,
+    move: def.move,
+    attack: def.attack,
     timer: 0,
     shootTimer: 80,
     phase: 1,        // 1 or 2 (triggers at 50% HP)
     entering: true,  // still flying into the screen
     alive: true,
     tier,
+    flash: 0,
   };
 }
 
 function drawBoss(ctx, boss) {
-  const { x, y, W: BW, H: BH, color, hp, maxHp, phase, timer } = boss;
+  const { x, y, W: BW, H: BH, color, hp, maxHp, phase, timer, flash, shape } = boss;
   const t = Date.now() / 200;
   const pulse = 0.8 + 0.2 * Math.sin(t);
   const rage = phase === 2;
+  const isFlashing = flash > 0;
 
   ctx.save();
   ctx.translate(x, y);
 
   // Outer hull glow
-  ctx.shadowColor = rage ? '#ff0000' : color;
+  ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
   ctx.shadowBlur = 20 + 10 * pulse;
 
-  if (boss.name === 'SENTINEL') {
+  if (shape === 'saucer') {
     // Wide flat saucer
-    ctx.fillStyle = rage ? `rgba(255,80,80,${pulse})` : `rgba(255,100,100,${pulse * 0.9})`;
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(255,80,80,${pulse})` : `rgba(255,100,100,${pulse * 0.9})`);
     ctx.beginPath();
     ctx.ellipse(0, 0, BW / 2, BH / 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = rage ? '#ff4444' : color;
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff4444' : color);
     ctx.beginPath();
     ctx.ellipse(0, -BH / 6, BW / 4, BH / 4, 0, 0, Math.PI * 2);
     ctx.fill();
     // Cannon ports
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = isFlashing ? '#ffffff' : '#44444c';
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath();
       ctx.arc(i * (BW / 5.5), BH / 5, 3, 0, Math.PI * 2);
       ctx.fill();
     }
-  } else if (boss.name === 'DESTROYER') {
+  } else if (shape === 'destroyer') {
     // Angular destroyer hull
-    ctx.fillStyle = rage ? `rgba(255,140,0,${pulse})` : `rgba(255,160,80,${pulse * 0.9})`;
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(255,140,0,${pulse})` : `rgba(255,160,80,${pulse * 0.9})`);
     ctx.beginPath();
     ctx.moveTo(0, -BH / 2);
     ctx.lineTo(-BW / 2, -BH / 6);
@@ -575,13 +885,13 @@ function drawBoss(ctx, boss) {
     ctx.beginPath();
     ctx.ellipse(0, 0, BW / 6, BH / 6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = rage ? '#ff8800' : color;
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff8800' : color);
     ctx.beginPath();
     ctx.ellipse(0, 0, BW / 12, BH / 12, 0, 0, Math.PI * 2);
     ctx.fill();
-  } else {
+  } else if (shape === 'overlord') {
     // OVERLORD — multi-wing form
-    ctx.fillStyle = rage ? `rgba(200,0,255,${pulse})` : `rgba(180,80,255,${pulse * 0.85})`;
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(200,0,255,${pulse})` : `rgba(180,80,255,${pulse * 0.85})`);
     // Central core
     ctx.beginPath();
     ctx.ellipse(0, 0, BW / 4, BH / 3, 0, 0, Math.PI * 2);
@@ -601,10 +911,163 @@ function drawBoss(ctx, boss) {
     ctx.closePath();
     ctx.fill();
     // Core eye
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = isFlashing ? '#ffffff' : '#ffffff';
     ctx.beginPath();
     ctx.ellipse(0, 0, BW / 14, BH / 10, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (shape === 'vortex') {
+    // Rotating star/vortex wheel
+    ctx.save();
+    ctx.rotate(timer * 0.04);
+    
+    // Spinning blades (6 blades)
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff3333' : color);
+    for (let i = 0; i < 6; i++) {
+      ctx.save();
+      ctx.rotate((i * Math.PI) / 3);
+      ctx.beginPath();
+      ctx.moveTo(-4, 0);
+      ctx.lineTo(0, -BH / 2);
+      ctx.lineTo(8, -BH / 2);
+      ctx.lineTo(4, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Outer glow ring
+    ctx.strokeStyle = isFlashing ? '#ffffff' : `rgba(255,255,255,${0.5 + 0.3 * pulse})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 3.2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Solid core sphere (doesn't rotate)
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(255,50,50,${pulse})` : `rgba(0,240,255,${pulse * 0.9})`);
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 4.8, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'heavy' || shape === 'battleship') {
+    // Heavy battleship
+    // Thrusters
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(-BW / 3, -BH / 2 - 2, BW / 6, 6);
+    ctx.fillRect(BW / 3 - BW / 6, -BH / 2 - 2, BW / 6, 6);
+
+    // Main heavy armor plate
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(255, 0, 50, ${pulse})` : `rgba(180, 20, 50, ${pulse * 0.9})`);
+    ctx.beginPath();
+    ctx.moveTo(0, BH / 2); // front nose beak
+    ctx.lineTo(-BW / 2, BH / 4); // left wing tip
+    ctx.lineTo(-BW / 2.5, -BH / 2); // left rear
+    ctx.lineTo(BW / 2.5, -BH / 2); // right rear
+    ctx.lineTo(BW / 2, BH / 4); // right wing tip
+    ctx.closePath();
+    ctx.fill();
+
+    // Twin massive shoulder cannons
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-BW / 3.5, -BH / 4, 7, BH / 2 + 10);
+    ctx.fillRect(BW / 3.5 - 7, -BH / 4, 7, BH / 2 + 10);
+    // Cannon tips
+    ctx.fillStyle = isFlashing ? '#ffffff' : '#94a3b8';
+    ctx.fillRect(-BW / 3.5 - 1, BH / 4 + 6, 9, 4);
+    ctx.fillRect(BW / 3.5 - 8, BH / 4 + 6, 9, 4);
+
+    // Core power cell
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff0033' : color);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 7, BH / 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'star') {
+    // Star core shape
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ef4444' : color);
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const angle = (i * Math.PI) / 5 + (timer * 0.015);
+      const r = i % 2 === 0 ? BW / 2 : BW / 4;
+      ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Star inner core eye
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 12, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'spikey') {
+    // Spike point core
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#dc2626' : color);
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const angle = (i * Math.PI) / 8 + (timer * 0.005);
+      const r = i % 2 === 0 ? BW / 2 : BW / 3.2;
+      ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Central neon circle
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 5, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (shape === 'carrier') {
+    // Large wide carrier deck
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(220, 38, 38, ${pulse})` : `rgba(47, 55, 69, ${pulse})`);
+    ctx.fillRect(-BW / 2, -BH / 2, BW, BH);
+
+    // Deck runways
+    ctx.fillStyle = isFlashing ? '#ffffff' : '#1e293b';
+    ctx.fillRect(-BW / 2 + 10, -BH / 4, BW - 20, BH / 2);
+    
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(-BW / 2 + 20, -2, BW - 40, 4); // yellow warning center stripe
+
+    // Side sensor arrays
+    ctx.fillStyle = color;
+    ctx.fillRect(-BW / 2 - 4, -BH / 3, 4, BH * 0.6);
+    ctx.fillRect(BW / 2, -BH / 3, 4, BH * 0.6);
+  } else if (shape === 'tri_fighter') {
+    // Trident nose fighter
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#f43f5e' : color);
+    ctx.beginPath();
+    ctx.moveTo(0, BH / 2); // front beak
+    ctx.lineTo(-BW / 2, -BH / 4); // left wingtip
+    ctx.lineTo(-BW / 4, -BH / 2); // left inner wing
+    ctx.lineTo(0, -BH / 8); // center notch
+    ctx.lineTo(BW / 4, -BH / 2); // right inner wing
+    ctx.lineTo(BW / 2, -BH / 4); // right wingtip
+    ctx.closePath();
+    ctx.fill();
+
+    // Laser nozzles
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-BW / 3, BH / 8, 4, 10);
+    ctx.fillRect(BW / 3 - 4, BH / 8, 4, 10);
+  } else {
+    // ORB: Glowing central sphere with orbiting sub-orbs
+    ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? '#ff0055' : color);
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Orbiting mini energy shields
+    ctx.fillStyle = isFlashing ? '#ffffff' : color;
+    const subShields = 3;
+    for (let i = 0; i < subShields; i++) {
+      const angle = (timer * 0.05) + (i * Math.PI * 2) / subShields;
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * (BW / 2.2), Math.sin(angle) * (BW / 2.2), 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Phase 2 rage ring
@@ -615,6 +1078,43 @@ function drawBoss(ctx, boss) {
     ctx.arc(0, 0, BW / 2 + 10 + 4 * Math.sin(t * 4), 0, Math.PI * 2);
     ctx.stroke();
   }
+
+  ctx.restore();
+}
+
+function drawLevelTimer(ctx, timer, duration, W) {
+  if (timer <= 0) return;
+  const pct = Math.max(0, Math.min(1, timer / duration));
+  const barW = 200;
+  const barH = 6;
+  const bx = (W - barW) / 2;
+  const by = 52; // below HUD
+
+  // Calculate minutes and seconds
+  const totalSeconds = Math.ceil(timer / 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const timeStr = `BOSS IN: ${minutes}:${String(seconds).padStart(2, '0')}`;
+
+  ctx.save();
+  // Text
+  ctx.font = "10px 'Courier New', monospace";
+  ctx.fillStyle = '#00f5ff';
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 6;
+  ctx.textAlign = 'center';
+  ctx.fillText(timeStr, W / 2, by - 6);
+
+  // Bar Track
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.shadowBlur = 0;
+  ctx.fillRect(bx, by, barW, barH);
+
+  // Bar Fill (Cyan glow)
+  ctx.fillStyle = '#00f5ff';
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(bx, by, barW * pct, barH);
 
   ctx.restore();
 }
@@ -688,7 +1188,7 @@ function RetroSpaceGame({ onClose }) {
     autoSaveTimerRef.current = 0;
     bestRef.current = lsGetBest();
 
-    const waveKillTarget = resumeData ? (8 + waveRef.current * 2) : 8;
+    const initialLevelTimer = (resumeData && typeof resumeData.levelTimer === 'number') ? resumeData.levelTimer : LEVEL_DURATION;
 
     stateRef.current = {
       W, H,
@@ -708,8 +1208,9 @@ function RetroSpaceGame({ onClose }) {
       crateTimer: 0,
       crateInterval: 420,
       enemiesKilled: 0,
-      waveKillTarget,
+      waveKillTarget: 8 + waveRef.current * 2,
       powerUps: { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
+      levelTimer: initialLevelTimer,
     };
 
     if (hudRef.current) hudRef.current.update(
@@ -806,16 +1307,21 @@ function RetroSpaceGame({ onClose }) {
         const b = bullets[i];
 
         if (b.homing) {
-          // Find nearest live enemy
+          // Find nearest live enemy/boss
           let nearest = null, nearestDist = Infinity;
           for (const e of enemies) {
             const dx = e.x - b.x, dy = e.y - b.y;
             const d = Math.sqrt(dx * dx + dy * dy);
             if (d < nearestDist) { nearestDist = d; nearest = e; }
           }
+          if (s.bossActive && s.boss && s.boss.alive) {
+            const dx = s.boss.x - b.x, dy = s.boss.y - b.y;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < nearestDist) { nearestDist = d; nearest = s.boss; }
+          }
           if (nearest) {
             const dx = nearest.x - b.x, dy = nearest.y - b.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             b.vx += (dx / dist) * 0.5;
             b.vy += (dy / dist) * 0.5;
             // Clamp speed
@@ -831,6 +1337,20 @@ function RetroSpaceGame({ onClose }) {
 
       /* ── Spawn enemies (only when no boss active) ── */
       if (!s.bossActive) {
+        // Countdown Level Timer
+        if (s.levelTimer > 0) {
+          s.levelTimer--;
+          if (s.levelTimer === 0) {
+            // Timer expired — Trigger Boss Incoming!
+            s.bossActive = true;
+            s.boss = spawnBoss(W, levelRef.current);
+            s.enemies = [];
+            s.enemyBullets = [];
+            bannerRef.current = { text: `⚠ BOSS INCOMING — ${s.boss.name}`, color: s.boss.color, timer: 150 };
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          }
+        }
+
         s.spawnTimer++;
         if (s.spawnTimer >= s.spawnInterval) {
           s.spawnTimer = 0;
@@ -881,13 +1401,32 @@ function RetroSpaceGame({ onClose }) {
         }
 
         e.timer++;
-        if (e.type === 1) {
-          e.vx += Math.sin(e.timer * 0.08) * 0.18;
-          e.vx = Math.max(-4, Math.min(4, e.vx));
-        } else if (e.type === 2) {
+
+        // Procedural movements
+        if (e.move === 'sine') {
+          e.vx = Math.sin(e.timer * 0.06) * e.baseSpeed * 0.8;
+        } else if (e.move === 'chase') {
           const dx = player.x - e.x;
-          e.vx += dx * 0.0015;
-          e.vx = Math.max(-3.5, Math.min(3.5, e.vx));
+          e.vx += dx * 0.0025;
+          e.vx = Math.max(-e.baseSpeed * 0.9, Math.min(e.baseSpeed * 0.9, e.vx));
+        } else if (e.move === 'zigzag') {
+          if (e.timer % 90 === 0) e.vx *= -1;
+        } else if (e.move === 'dash') {
+          if (e.y < H * 0.4) {
+            e.vy = e.baseSpeed * 0.4;
+          } else {
+            e.vy = e.baseSpeed * 1.8;
+            if (e.power === 'speed_boost') e.vx = Math.sin(e.timer * 0.1) * 2;
+          }
+        } else if (e.move === 'wobble') {
+          e.vx = Math.sin(e.timer * 0.12) * 2;
+          e.vy = e.baseSpeed * 0.85;
+        }
+
+        if (e.power === 'teleport' && e.timer % 140 === 0) {
+          e.x += (Math.random() - 0.5) * 85;
+          e.x = Math.max(40, Math.min(W - 40, e.x));
+          explosions.push(...createExplosion(e.x, e.y, 4));
         }
 
         e.x += e.vx;
@@ -900,12 +1439,28 @@ function RetroSpaceGame({ onClose }) {
         if (e.shootTimer <= 0) {
           e.shootTimer = 100 + Math.random() * 180;
           const dx = player.x - e.x, dy = player.y - e.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          enemyBullets.push({
-            x: e.x, y: e.y + ENEMY_H / 2,
-            vx: (dx / dist) * ENEMY_BULLET_SPEED,
-            vy: (dy / dist) * ENEMY_BULLET_SPEED,
-          });
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+          if (e.power === 'spread') {
+            for (let j = 0; j < 3; j++) {
+              const ang = Math.PI / 2 + (j - 1) * 0.25;
+              enemyBullets.push({ x: e.x, y: e.y + ENEMY_H / 2, vx: Math.cos(ang) * ENEMY_BULLET_SPEED, vy: Math.sin(ang) * ENEMY_BULLET_SPEED });
+            }
+          } else if (e.power === 'double') {
+            enemyBullets.push({ x: e.x - 6, y: e.y + ENEMY_H / 2, vx: 0, vy: ENEMY_BULLET_SPEED });
+            enemyBullets.push({ x: e.x + 6, y: e.y + ENEMY_H / 2, vx: 0, vy: ENEMY_BULLET_SPEED });
+          } else if (e.power === 'rear_shot' && e.y < player.y) {
+            enemyBullets.push({ x: e.x, y: e.y + ENEMY_H / 2, vx: (dx / dist) * ENEMY_BULLET_SPEED, vy: (dy / dist) * ENEMY_BULLET_SPEED });
+            enemyBullets.push({ x: e.x, y: e.y - ENEMY_H / 2, vx: 0, vy: -ENEMY_BULLET_SPEED * 0.8 }); // back shot
+          } else if (e.power === 'suicide') {
+            e.shootTimer = 99999;
+          } else {
+            enemyBullets.push({
+              x: e.x, y: e.y + ENEMY_H / 2,
+              vx: (dx / dist) * ENEMY_BULLET_SPEED,
+              vy: (dy / dist) * ENEMY_BULLET_SPEED,
+            });
+          }
         }
 
         /* ── Bullet-enemy collision ── */
@@ -916,31 +1471,57 @@ function RetroSpaceGame({ onClose }) {
             by > e.y - ENEMY_H / 2 && by < e.y + ENEMY_H / 2
           ) {
             bullets.splice(b, 1);
+
+            if (e.shield > 0) {
+              e.shield--;
+              explosions.push(...createExplosion(bx, by, 3));
+              break;
+            }
+
             e.hp--;
+            explosions.push(...createExplosion(bx, by, 3));
+
             if (e.hp <= 0) {
               e.alive = false;
-              scoreRef.current += e.type === 2 ? 30 : e.type === 1 ? 20 : 10;
-              s.enemiesKilled++;
-              if (s.enemiesKilled >= s.waveKillTarget) {
-                waveRef.current++;
-                s.enemiesKilled = 0;
-                s.waveKillTarget = 8 + waveRef.current * 2;
 
-                // Boss wave?
-                if (waveRef.current % WAVES_PER_LEVEL === 0) {
-                  s.bossActive = true;
-                  const bossLevel = Math.ceil(waveRef.current / WAVES_PER_LEVEL);
-                  levelRef.current = bossLevel;
-                  s.boss = spawnBoss(W, bossLevel);
-                  s.enemies = [];
-                  s.enemyBullets = [];
-                  bannerRef.current = { text: `⚠ BOSS INCOMING — ${s.boss.name}`, color: s.boss.color, timer: 150 };
-                  if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
-                  break;
+              if (e.power === 'splitter') {
+                for (let j = 0; j < 2; j++) {
+                  enemies.push({
+                    name: 'Mini Swarmer',
+                    x: e.x + (j === 0 ? -15 : 15),
+                    y: e.y,
+                    vx: (j === 0 ? -1.2 : 1.2) * (e.baseSpeed * 0.8),
+                    vy: e.vy * 1.1,
+                    baseSpeed: e.baseSpeed,
+                    hp: 1,
+                    maxHp: 1,
+                    color: '#a855f7',
+                    shape: 'tri',
+                    move: 'sine',
+                    power: 'normal',
+                    timer: 0,
+                    shootTimer: 45 + Math.random() * 90,
+                    shield: 0,
+                    alive: true,
+                  });
+                }
+              } else if (e.power === 'bomb') {
+                for (let j = 0; j < 6; j++) {
+                  const ang = (Math.PI * 2 / 6) * j;
+                  enemyBullets.push({
+                    x: e.x,
+                    y: e.y,
+                    vx: Math.cos(ang) * ENEMY_BULLET_SPEED * 0.85,
+                    vy: Math.sin(ang) * ENEMY_BULLET_SPEED * 0.85,
+                  });
                 }
               }
+
+              scoreRef.current += e.maxHp * 15;
+              lsSetBest(scoreRef.current);
+              bestRef.current = lsGetBest();
+              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
             }
-            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
             break;
           }
         }
@@ -1012,8 +1593,9 @@ function RetroSpaceGame({ onClose }) {
           bestRef.current = lsGetBest();
           s.boss = null;
           s.bossActive = false;
+          s.levelTimer = LEVEL_DURATION; // Reset survival timer
+          levelRef.current++;
           waveRef.current++;
-          levelRef.current = Math.ceil(waveRef.current / WAVES_PER_LEVEL);
           s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
           s.waveKillTarget = 8 + waveRef.current * 2;
           s.enemiesKilled = 0;
@@ -1021,29 +1603,51 @@ function RetroSpaceGame({ onClose }) {
           if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
         } else {
           boss.timer++;
+          if (boss.flash > 0) boss.flash--;
 
           // Entry animation
           if (boss.entering) {
             boss.y += 2.5; // fast entry
             if (boss.y >= 130) { boss.entering = false; }
           } else {
-            // SENTINEL: left-right sweep
-            if (boss.name === 'SENTINEL') {
+            // Movement based on boss.move parameter
+            if (boss.move === 'sweep') {
               boss.x += boss.vx;
               if (boss.x > W - boss.W / 2 - 20 || boss.x < boss.W / 2 + 20) boss.vx *= -1;
               boss.y = 130 + 20 * Math.sin(boss.timer * 0.015);
             }
-            // DESTROYER: sine wave float
-            else if (boss.name === 'DESTROYER') {
+            else if (boss.move === 'sine') {
               const spd = boss.phase === 2 ? 1.5 : 1;
               boss.x = W / 2 + (W * 0.38) * Math.sin(boss.timer * 0.018 * spd);
               boss.y = 140 + 40 * Math.sin(boss.timer * 0.025);
             }
-            // OVERLORD: figure-8
-            else {
+            else if (boss.move === 'figure8') {
               const spd = boss.phase === 2 ? 1.4 : 1;
               boss.x = W / 2 + (W * 0.35) * Math.sin(boss.timer * 0.02 * spd);
               boss.y = 140 + 55 * Math.sin(boss.timer * 0.04 * spd);
+            }
+            else if (boss.move === 'butterfly') {
+              const spd = boss.phase === 2 ? 1.3 : 1;
+              boss.x = W / 2 + (W * 0.38) * Math.sin(boss.timer * 0.022 * spd);
+              boss.y = 150 + 60 * Math.cos(boss.timer * 0.044 * spd);
+            }
+            else if (boss.move === 'bounce') {
+              const spd = boss.phase === 2 ? 1.4 : 1;
+              boss.x += boss.vx * spd;
+              boss.y += boss.vy * spd;
+              if (boss.x > W - boss.W / 2 - 20 || boss.x < boss.W / 2 + 20) boss.vx *= -1;
+              if (boss.y > 240 || boss.y < 120) boss.vy *= -1;
+            }
+            else if (boss.move === 'circle') {
+              const spd = boss.phase === 2 ? 1.3 : 1;
+              const radius = Math.min(W * 0.25, 120);
+              boss.x = W / 2 + radius * Math.cos(boss.timer * 0.015 * spd);
+              boss.y = 160 + radius * 0.5 * Math.sin(boss.timer * 0.015 * spd);
+            }
+            else { // swoop
+              const spd = boss.phase === 2 ? 1.3 : 1;
+              boss.x = W / 2 + (W * 0.3) * Math.sin(boss.timer * 0.012);
+              boss.y = 160 + 90 * Math.sin(boss.timer * 0.03 * spd);
             }
 
             // Trigger Phase 2 at 50% HP
@@ -1061,13 +1665,14 @@ function RetroSpaceGame({ onClose }) {
               boss.shootTimer = shootRate;
               const bspd = ENEMY_BULLET_SPEED + boss.tier * 0.5;
 
-              if (boss.name === 'SENTINEL') {
+              // Attacks based on boss.attack parameter
+              if (boss.attack === 'spread') {
                 const shots = boss.phase === 2 ? 5 : 3;
                 for (let i = 0; i < shots; i++) {
                   const ang = (Math.PI / 2) + (i - (shots - 1) / 2) * 0.28;
                   enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
                 }
-              } else if (boss.name === 'DESTROYER') {
+              } else if (boss.attack === 'burst') {
                 const dx = player.x - boss.x, dy = player.y - boss.y;
                 const dist = Math.sqrt(dx * dx + dy * dy) || 1;
                 const shots = boss.phase === 2 ? 5 : 3;
@@ -1075,8 +1680,7 @@ function RetroSpaceGame({ onClose }) {
                   const spread = (Math.random() - 0.5) * 0.4;
                   enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: (dx / dist) * bspd + spread, vy: (dy / dist) * bspd + spread });
                 }
-              } else {
-                // OVERLORD: spiral
+              } else if (boss.attack === 'spiral') {
                 const spiralCount = boss.phase === 2 ? 8 : 6;
                 for (let i = 0; i < spiralCount; i++) {
                   const ang = (boss.timer * 0.06) + (i / spiralCount) * Math.PI * 2;
@@ -1086,6 +1690,47 @@ function RetroSpaceGame({ onClose }) {
                   const dx = player.x - boss.x, dy = player.y - boss.y;
                   const dist = Math.sqrt(dx * dx + dy * dy) || 1;
                   enemyBullets.push({ x: boss.x, y: boss.y, vx: (dx / dist) * bspd * 1.4, vy: (dy / dist) * bspd * 1.4 });
+                }
+              } else if (boss.attack === 'pods') {
+                enemyBullets.push({ x: boss.x - 20, y: boss.y + boss.H / 4, vx: 0, vy: bspd });
+                enemyBullets.push({ x: boss.x + 20, y: boss.y + boss.H / 4, vx: 0, vy: bspd });
+                if (boss.phase === 2) {
+                  const ringCount = 8;
+                  for (let i = 0; i < ringCount; i++) {
+                    const ang = (i / ringCount) * Math.PI * 2;
+                    enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(ang) * bspd * 0.9, vy: Math.sin(ang) * bspd * 0.9 });
+                  }
+                }
+              } else if (boss.attack === 'sweep') {
+                const sweepCount = boss.phase === 2 ? 6 : 4;
+                const baseAng = (Math.PI / 2) + Math.sin(boss.timer * 0.07) * 0.5;
+                for (let i = 0; i < sweepCount; i++) {
+                  const ang = baseAng + (i - (sweepCount - 1) / 2) * 0.15;
+                  enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+                if (boss.phase === 2 && boss.timer % 2 === 0) {
+                  enemyBullets.push({ x: boss.x - 10, y: boss.y + boss.H / 2, vx: 0, vy: bspd * 1.3 });
+                  enemyBullets.push({ x: boss.x + 10, y: boss.y + boss.H / 2, vx: 0, vy: bspd * 1.3 });
+                }
+              } else if (boss.attack === 'ring') {
+                const ringCount = boss.phase === 2 ? 16 : 10;
+                for (let i = 0; i < ringCount; i++) {
+                  const ang = (i / ringCount) * Math.PI * 2;
+                  enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(ang) * bspd * 0.85, vy: Math.sin(ang) * bspd * 0.85 });
+                }
+              } else if (boss.attack === 'targeted') {
+                const dx = player.x - boss.x, dy = player.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: (dx / dist) * bspd * 1.5, vy: (dy / dist) * bspd * 1.5 });
+                if (boss.phase === 2) {
+                  enemyBullets.push({ x: boss.x - 15, y: boss.y, vx: (dx / dist) * bspd * 1.3, vy: (dy / dist) * bspd * 1.3 });
+                  enemyBullets.push({ x: boss.x + 15, y: boss.y, vx: (dx / dist) * bspd * 1.3, vy: (dy / dist) * bspd * 1.3 });
+                }
+              } else { // comb
+                const streams = boss.phase === 2 ? 6 : 4;
+                for (let i = 0; i < streams; i++) {
+                  const bx = boss.x - boss.W / 2 + (i / (streams - 1)) * boss.W;
+                  enemyBullets.push({ x: bx, y: boss.y + boss.H / 2, vx: 0, vy: bspd * 0.95 });
                 }
               }
             }
@@ -1100,6 +1745,7 @@ function RetroSpaceGame({ onClose }) {
             ) {
               bullets.splice(b, 1);
               boss.hp--;
+              boss.flash = 6;
               if (boss.hp <= 0) boss.alive = false;
               if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
               break;
@@ -1172,7 +1818,7 @@ function RetroSpaceGame({ onClose }) {
 
       // Player
       if (player.invincible <= 0 || Math.floor(player.invincible / 6) % 2 === 0) {
-        drawShip(ctx, player.x, player.y, player.flash > 0, s.powerUps.SHIELD > 0);
+        drawShip(ctx, player.x, player.y, player.flash > 0, s.powerUps.SHIELD > 0, player.vx, player.vy);
       }
 
       // Explosions
@@ -1188,6 +1834,9 @@ function RetroSpaceGame({ onClose }) {
       if (s.bossActive && s.boss) {
         drawBoss(ctx, s.boss);
         drawBossHpBar(ctx, s.boss, W);
+      } else {
+        // Draw Level Timer (Time to Boss)
+        drawLevelTimer(ctx, s.levelTimer, LEVEL_DURATION, W);
       }
 
       // Incoming banner (BOSS / LEVEL UP)
@@ -1211,7 +1860,7 @@ function RetroSpaceGame({ onClose }) {
       autoSaveTimerRef.current++;
       if (autoSaveTimerRef.current >= 300) {
         autoSaveTimerRef.current = 0;
-        lsSetSave({ score: scoreRef.current, lives: livesRef.current, wave: waveRef.current, level: levelRef.current });
+        lsSetSave({ score: scoreRef.current, lives: livesRef.current, wave: waveRef.current, level: levelRef.current, levelTimer: s.levelTimer });
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -1243,8 +1892,16 @@ function RetroSpaceGame({ onClose }) {
 
   React.useEffect(() => {
     hudRef.current = {
-      update: (score, lives, wave, level, powerUps, best, boss) =>
-        setHudState({ score, lives, wave, level: level ?? 1, powerUps: powerUps || { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 }, best: best ?? lsGetBest(), boss: boss ?? null }),
+      update: (score, lives, wave, level, powerUps, best) =>
+        setHudState({
+          score,
+          lives,
+          wave,
+          level: level ?? 1,
+          powerUps: powerUps || { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
+          best: best ?? lsGetBest(),
+          boss: (stateRef.current && stateRef.current.bossActive && stateRef.current.boss) ? stateRef.current.boss : null
+        }),
     };
     msgRef.current = {
       show: (type) => setMsgState({ visible: true, type }),
@@ -1256,7 +1913,7 @@ function RetroSpaceGame({ onClose }) {
 
   const heartsStr = '♥'.repeat(Math.max(0, hudState.lives)) + '♡'.repeat(Math.max(0, MAX_LIVES - hudState.lives));
   const activePowerUps = PU_KEYS.filter(k => hudState.powerUps[k] > 0);
-  const isBossWave = hudState.wave > 0 && hudState.wave % WAVES_PER_LEVEL === 0;
+  const isBossWave = hudState.boss !== null;
 
   return (
     <>
