@@ -293,7 +293,7 @@ const BOSS_DEFS = [
   { name: 'VANGUARD',    hp: 3360, score: 6400, color: '#16a34a', W: 95,  H: 85,  speed: 2.1, shape: 'tri_fighter', move: 'sine',      attack: 'burst' },
   { name: 'DEVASTATOR',  hp: 3540, score: 6600, color: '#e11d48', W: 120, H: 105, speed: 1.3, shape: 'heavy',       move: 'figure8',   attack: 'ring' },
   { name: 'CONQUEROR',   hp: 3720, score: 6800, color: '#4f46e5', W: 115, H: 100, speed: 1.5, shape: 'carrier',     move: 'butterfly', attack: 'pods' },
-  { name: 'INFINITY',    hp: 4000, score: 8000, color: '#06b6d4', W: 125, H: 110, speed: 1.8, shape: 'swoop',     attack: 'spiral' },
+  { name: 'INFINITY',    hp: 4000, score: 8000, color: '#06b6d4', W: 125, H: 110, speed: 1.8, shape: 'vortex',    move: 'swoop',     attack: 'spiral' },
 ];
 
 // Power-up types
@@ -760,6 +760,7 @@ function drawShip(ctx, x, y, flash, shielded, vx = 0, vy = 0) {
 
 function drawEnemy(ctx, e) {
   const { shape, color, hp, maxHp, timer, shield } = e;
+  const isFlashing = e.flash > 0;
   const t = Date.now() / 200;
   const pulse = 0.8 + 0.2 * Math.sin(t + e.x);
 
@@ -781,16 +782,34 @@ function drawEnemy(ctx, e) {
 
   ctx.fillStyle = color;
 
+  const flk = Math.random();
+  const flamePulse = 1 + 0.3 * Math.sin(Date.now() / 40 + e.x);
+
   if (shape === 'tri') {
-    // 1. Engine exhaust
-    const flameL = 6 + Math.random() * 6;
-    let flameGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - flameL);
-    flameGrad.addColorStop(0, color);
-    flameGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = flameGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, -ENEMY_H / 2 + 2, 2.5, flameL, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // 1. Engine exhaust — twin nozzles + gradient flames + white core
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-ENEMY_W / 4 - 1.5, -ENEMY_H / 2 - 2, 3, 4);
+    ctx.fillRect(ENEMY_W / 4 - 1.5, -ENEMY_H / 2 - 2, 3, 4);
+    for (const side of [-1, 1]) {
+      const fx = side * ENEMY_W / 4;
+      const fy = -ENEMY_H / 2 + 1;
+      const fLen = (7 + flk * 5) * flamePulse;
+      let fGrad = ctx.createLinearGradient(fx, fy, fx, fy - fLen);
+      fGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      fGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      fGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = fGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 3, fLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 1.2, fLen * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
 
     // 2. Wings (dual color gradients for metallic feel)
     let wingGrad = ctx.createLinearGradient(-ENEMY_W / 2, 0, ENEMY_W / 2, 0);
@@ -834,6 +853,30 @@ function drawEnemy(ctx, e) {
     ctx.stroke();
 
   } else if (shape === 'saucer') {
+    // 0. Engine exhaust — 3 nozzles on top + gradient flames + white core
+    for (let i = -1; i <= 1; i++) {
+      const tx = i * ENEMY_W / 5;
+      const ty = -ENEMY_H / 3.5;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(tx - 1.5, ty - 2, 3, 3);
+      const tLen = (5 + flk * 4) * flamePulse;
+      let tGrad = ctx.createLinearGradient(tx, ty, tx, ty - tLen);
+      tGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      tGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      tGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = tGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(tx, ty, 2.5, tLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(tx, ty, 1, tLen * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
     // 1. Bottom metallic base
     let diskGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, ENEMY_W / 2);
     diskGrad.addColorStop(0, '#475569');
@@ -873,7 +916,28 @@ function drawEnemy(ctx, e) {
     }
 
   } else if (shape === 'diamond') {
-    // 4 shaded facets for crystalline look
+    // 0. Engine exhaust — single nozzle at top + crystal flame + white core
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-2, -ENEMY_H / 2 - 1, 4, 3);
+    const dLen = (8 + flk * 5) * flamePulse;
+    let dGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - dLen);
+    dGrad.addColorStop(0, isFlashing ? '#ff8888' : '#ffffff');
+    dGrad.addColorStop(0.2, isFlashing ? '#ffaaaa' : color);
+    dGrad.addColorStop(0.6, isFlashing ? '#ffcccc' : shadeColor(color, 30));
+    dGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = dGrad;
+    ctx.shadowColor = isFlashing ? '#ff4444' : color;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 4, dLen, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 1.5, dLen * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 1. 4 shaded facets for crystalline look
     const dw = ENEMY_W / 2;
     const dh = ENEMY_H / 2;
 
@@ -915,6 +979,30 @@ function drawEnemy(ctx, e) {
     ctx.shadowBlur = 0;
 
   } else if (shape === 'orb') {
+    // 0. Engine exhaust — side-mounted nozzles + gradient flames + white core
+    for (const side of [-1, 1]) {
+      const ox = side * ENEMY_W / 3;
+      const oy = -ENEMY_H / 5;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(ox - 1.5, oy - 2, 3, 3);
+      const oLen = (5 + flk * 4) * flamePulse;
+      let oGrad = ctx.createLinearGradient(ox, oy, ox, oy - oLen);
+      oGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      oGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      oGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = oGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, 2.5, oLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, 1, oLen * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
     // 1. Outer curved shield wings
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.8;
@@ -944,6 +1032,29 @@ function drawEnemy(ctx, e) {
     ctx.fill();
 
   } else if (shape === 'spikey') {
+    // 0. Engine exhaust — top 3 tendril-tip flames + white core
+    for (let i = -1; i <= 1; i++) {
+      const angle = (timer * 0.02) + i * 0.4 - Math.PI / 2;
+      const tipX = Math.cos(angle) * ENEMY_W / 2;
+      const tipY = Math.sin(angle) * ENEMY_W / 2;
+      const sLen = (4 + flk * 3) * flamePulse;
+      let sGrad = ctx.createLinearGradient(tipX, tipY, tipX, tipY - sLen);
+      sGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      sGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      sGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(tipX, tipY, 2, sLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(tipX, tipY, 0.8, sLen * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
     // 1. Inner core
     let coreGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, ENEMY_W / 4.2);
     coreGrad.addColorStop(0, '#ffffff');
@@ -980,13 +1091,32 @@ function drawEnemy(ctx, e) {
     }
 
   } else if (shape === 'heavy') {
-    // 1. Wing thrusters exhaust
-    ctx.fillStyle = 'rgba(255, 100, 0, 0.85)';
-    const flameH = 5 + Math.random() * 5;
-    ctx.fillRect(-ENEMY_W / 3 - 1, -ENEMY_H / 2 - flameH, 2.5, flameH);
-    ctx.fillRect(ENEMY_W / 3 - 1.5, -ENEMY_H / 2 - flameH, 2.5, flameH);
+    // 0. Engine exhaust — dual heavy nozzles + large gradient flames + white core
+    for (const side of [-1, 1]) {
+      const hx = side * ENEMY_W / 3;
+      const hy = -ENEMY_H / 2;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(hx - 2.5, hy - 2, 5, 4);
+      const hLen = (9 + flk * 6) * flamePulse;
+      let hGrad = ctx.createLinearGradient(hx, hy, hx, hy - hLen);
+      hGrad.addColorStop(0, isFlashing ? '#ff8888' : '#ff8800');
+      hGrad.addColorStop(0.15, isFlashing ? '#ffaaaa' : '#ffffff');
+      hGrad.addColorStop(0.4, isFlashing ? '#ffcccc' : color);
+      hGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = hGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : '#ff8800';
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, 3.5, hLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, 1.5, hLen * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
 
-    // 2. Armored wing plating
+    // 1. Armored wing plating
     ctx.fillStyle = '#334155';
     ctx.fillRect(-ENEMY_W / 2, -ENEMY_H / 2.2, ENEMY_W / 4.5, ENEMY_H * 0.82);
     ctx.fillRect(ENEMY_W / 2 - ENEMY_W / 4.5, -ENEMY_H / 2.2, ENEMY_W / 4.5, ENEMY_H * 0.82);
@@ -1014,6 +1144,31 @@ function drawEnemy(ctx, e) {
     ctx.fillRect(-3, -ENEMY_H / 3, 6, 2);
 
   } else {
+    // 0. Engine exhaust — 4 wing-tip nozzles + directional flames + white core
+    const pts = [[-1,-1],[1,-1],[1,1],[-1,1]];
+    for (const [sx, sy] of pts) {
+      const ex = sx * ENEMY_W / 2.1;
+      const ey = sy * ENEMY_H / 2.1;
+      const eLen = (5 + flk * 3) * flamePulse;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(ex - sx * 2 - 1, ey - sy * 2 - 1, 2, 2);
+      let eGrad = ctx.createLinearGradient(ex, ey, ex + sx * eLen, ey + sy * eLen);
+      eGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      eGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      eGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = eGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(ex + sx * eLen * 0.3, ey + sy * eLen * 0.3, 2, eLen * 0.6, Math.atan2(sy, sx), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(ex + sx * eLen * 0.15, ey + sy * eLen * 0.15, 0.8, eLen * 0.25, Math.atan2(sy, sx), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
     // Interceptor X-Wing
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.2;
@@ -1046,149 +1201,6 @@ function drawEnemy(ctx, e) {
     ctx.fill();
   }
 
-  // Engine exhaust for all shapes
-  const flk = Math.random();
-  if (shape === 'tri') {
-    // Twin thruster jets from wing notches
-    for (const side of [-1, 1]) {
-      const fx = side * ENEMY_W / 4;
-      const fy = -ENEMY_H / 2.5;
-      const fLen = 5 + flk * 7;
-      const fGrad = ctx.createLinearGradient(fx, fy, fx, fy - fLen);
-      fGrad.addColorStop(0, color);
-      fGrad.addColorStop(0.3, '#ffffff');
-      fGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = fGrad;
-      ctx.beginPath();
-      ctx.moveTo(fx - 2, fy);
-      ctx.lineTo(fx, fy - fLen);
-      ctx.lineTo(fx + 2, fy);
-      ctx.closePath();
-      ctx.fill();
-    }
-  } else if (shape === 'saucer') {
-    // Tractor beam glow underneath + perimeter micro-thrusters
-    const tbGrad = ctx.createRadialGradient(0, ENEMY_H / 4, 1, 0, ENEMY_H / 4, ENEMY_W / 4);
-    tbGrad.addColorStop(0, `rgba(0,255,200,${0.3 + flk * 0.3})`);
-    tbGrad.addColorStop(1, 'rgba(0,255,200,0)');
-    ctx.fillStyle = tbGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, ENEMY_H / 4, ENEMY_W / 4, 6 + flk * 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // 3 micro-thruster cones on top
-    for (let i = -1; i <= 1; i++) {
-      const tx = i * ENEMY_W / 5;
-      const tLen = 3 + flk * 4;
-      const tGrad = ctx.createLinearGradient(tx, -ENEMY_H / 3, tx, -ENEMY_H / 3 - tLen);
-      tGrad.addColorStop(0, '#ffffff');
-      tGrad.addColorStop(0.5, color);
-      tGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = tGrad;
-      ctx.beginPath();
-      ctx.moveTo(tx - 1.5, -ENEMY_H / 3);
-      ctx.lineTo(tx, -ENEMY_H / 3 - tLen);
-      ctx.lineTo(tx + 1.5, -ENEMY_H / 3);
-      ctx.closePath();
-      ctx.fill();
-    }
-  } else if (shape === 'diamond') {
-    // Crystal shard energy trail from top
-    const cLen = 6 + flk * 8;
-    const cGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - cLen);
-    cGrad.addColorStop(0, '#ffffff');
-    cGrad.addColorStop(0.3, color);
-    cGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = cGrad;
-    ctx.beginPath();
-    ctx.moveTo(-3, -ENEMY_H / 2);
-    ctx.lineTo(0, -ENEMY_H / 2 - cLen);
-    ctx.lineTo(3, -ENEMY_H / 2);
-    ctx.closePath();
-    ctx.fill();
-    // Side sparkles
-    ctx.fillStyle = `rgba(255,255,255,${0.3 + flk * 0.4})`;
-    ctx.beginPath();
-    ctx.arc(-ENEMY_W / 3, -ENEMY_H / 4, 1 + flk, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(ENEMY_W / 3, -ENEMY_H / 4, 1 + flk, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (shape === 'orb') {
-    // Pulsing energy exhaust ring at top
-    const ringR = 4 + flk * 3;
-    ctx.strokeStyle = `rgba(255,255,255,${0.4 + flk * 0.4})`;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.ellipse(0, -ENEMY_W / 2.2, ringR, 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    // Inner glow
-    const oGrad = ctx.createRadialGradient(0, -ENEMY_W / 2.5, 0, 0, -ENEMY_W / 2.5, 5);
-    oGrad.addColorStop(0, `rgba(255,255,255,${0.5 + flk * 0.3})`);
-    oGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = oGrad;
-    ctx.beginPath();
-    ctx.arc(0, -ENEMY_W / 2.5, 5, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (shape === 'spikey') {
-    // Tendril tip flares at top 3 spikes
-    for (let i = -1; i <= 1; i++) {
-      const angle = (timer * 0.02) + i * 0.4 - Math.PI / 2;
-      const tipX = Math.cos(angle) * ENEMY_W / 2;
-      const tipY = Math.sin(angle) * ENEMY_W / 2;
-      const fR = 2 + flk * 2;
-      const fGrad = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, fR);
-      fGrad.addColorStop(0, '#ffffff');
-      fGrad.addColorStop(0.5, color);
-      fGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = fGrad;
-      ctx.beginPath();
-      ctx.arc(tipX, tipY, fR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (shape === 'heavy') {
-    // Dual heavy thruster exhausts from top
-    for (const side of [-1, 1]) {
-      const hx = side * ENEMY_W / 3;
-      const hy = -ENEMY_H / 2;
-      const hLen = 7 + flk * 8;
-      const hGrad = ctx.createLinearGradient(hx, hy, hx, hy - hLen);
-      hGrad.addColorStop(0, '#ff8800');
-      hGrad.addColorStop(0.2, '#ffffff');
-      hGrad.addColorStop(0.6, color);
-      hGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = hGrad;
-      ctx.beginPath();
-      ctx.moveTo(hx - 3, hy);
-      ctx.quadraticCurveTo(hx, hy - hLen, hx + 3, hy);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Center vent
-    const cvGrad = ctx.createRadialGradient(0, -ENEMY_H / 2, 0, 0, -ENEMY_H / 2, 4);
-    cvGrad.addColorStop(0, `rgba(255,200,100,${0.4 + flk * 0.3})`);
-    cvGrad.addColorStop(1, 'rgba(255,200,100,0)');
-    ctx.fillStyle = cvGrad;
-    ctx.beginPath();
-    ctx.arc(0, -ENEMY_H / 2, 4, 0, Math.PI * 2);
-    ctx.fill();
-  } else {
-    // Cross: 4 wing-tip engine glows
-    const pts = [[-1,-1],[1,-1],[1,1],[-1,1]];
-    for (const [sx, sy] of pts) {
-      const ex = sx * ENEMY_W / 2.1;
-      const ey = sy * ENEMY_H / 2.1;
-      const eR = 2.5 + flk * 2;
-      const eGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, eR);
-      eGrad.addColorStop(0, '#ffffff');
-      eGrad.addColorStop(0.4, color);
-      eGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = eGrad;
-      ctx.beginPath();
-      ctx.arc(ex, ey, eR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
   // HP Bar overlay for high HP targets
   if (maxHp > 1 && hp > 0) {
     ctx.shadowBlur = 0;
@@ -1199,6 +1211,16 @@ function drawEnemy(ctx, e) {
   }
 
   ctx.restore();
+}
+
+function shadeColor(hex, percent) {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.max(0, Math.min(255, r + Math.round(r * percent / 100)));
+  g = Math.max(0, Math.min(255, g + Math.round(g * percent / 100)));
+  b = Math.max(0, Math.min(255, b + Math.round(b * percent / 100)));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 /* ─── DRAW: Power-up Crate ─── */
