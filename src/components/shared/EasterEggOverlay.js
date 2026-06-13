@@ -250,6 +250,7 @@ const MISSILE_SPEED = 6;
 const ENEMY_BULLET_SPEED = 3.5;
 const MAX_LIVES = 4;
 const LIFE_DROP_CHANCE = 0.08;
+const MAX_HEALTH = 3;
 const BASE_SHOOT_COOLDOWN = 220;
 const CRATE_W = 26, CRATE_H = 26;
 const LEVEL_DURATION = 7200; // 2 minutes (120 seconds * 60 FPS)
@@ -1371,7 +1372,7 @@ function RetroSpaceGame({ onClose }) {
 
     stateRef.current = {
       W, H,
-      player: { x: W / 2, y: H - 60, vx: 0, vy: 0, flash: 0, invincible: 0 },
+      player: { x: W / 2, y: H - 60, vx: 0, vy: 0, flash: 0, invincible: 0, health: MAX_HEALTH },
       bullets: [],
       enemyBullets: [],
       enemies: [],
@@ -1396,7 +1397,7 @@ function RetroSpaceGame({ onClose }) {
 
     if (hudRef.current) hudRef.current.update(
       scoreRef.current, livesRef.current, waveRef.current, levelRef.current,
-      { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 }, bestRef.current
+      { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 }, bestRef.current, MAX_HEALTH
     );
     if (msgRef.current) msgRef.current.hide();
   }, []);
@@ -1542,7 +1543,7 @@ function RetroSpaceGame({ onClose }) {
             s.enemies = [];
             s.enemyBullets = [];
             bannerRef.current = { text: `⚠ BOSS INCOMING — ${s.boss.name}`, color: s.boss.color, timer: 150 };
-            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
           }
         }
 
@@ -1581,7 +1582,7 @@ function RetroSpaceGame({ onClose }) {
           }
           explosions.push(...createExplosion(c.x, c.y, 8));
           crates.splice(i, 1);
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
           continue;
         }
       }
@@ -1598,12 +1599,14 @@ function RetroSpaceGame({ onClose }) {
           Math.abs(lp.x - player.x) < (16 + SHIP_W / 2) &&
           Math.abs(lp.y - player.y) < (16 + SHIP_H / 2)
         ) {
-          if (livesRef.current < MAX_LIVES) {
+          if (player.health < MAX_HEALTH) {
+            player.health++;
+          } else if (livesRef.current < MAX_LIVES) {
             livesRef.current++;
           }
           explosions.push(...createExplosion(lp.x, lp.y, 10));
           s.lifePickups.splice(i, 1);
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
           continue;
         }
       }
@@ -1737,7 +1740,7 @@ function RetroSpaceGame({ onClose }) {
               scoreRef.current += e.maxHp * 15;
               lsSetBest(scoreRef.current);
               bestRef.current = lsGetBest();
-              if (Math.random() < LIFE_DROP_CHANCE && livesRef.current < MAX_LIVES) {
+              if (Math.random() < LIFE_DROP_CHANCE && (livesRef.current < MAX_LIVES || player.health < MAX_HEALTH)) {
                 s.lifePickups.push({
                   x: e.x, y: e.y,
                   vy: 1.2 + Math.random() * 0.5,
@@ -1745,7 +1748,7 @@ function RetroSpaceGame({ onClose }) {
                   alive: true,
                 });
               }
-              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
             }
             break;
           }
@@ -1766,7 +1769,11 @@ function RetroSpaceGame({ onClose }) {
         ) {
           enemyBullets.splice(i, 1);
           player.invincible = 90; player.flash = 18;
-          livesRef.current--;
+          player.health--;
+          if (player.health <= 0) {
+            livesRef.current--;
+            player.health = MAX_HEALTH;
+          }
           explosions.push(...createExplosion(player.x, player.y, 8));
           if (livesRef.current <= 0) {
             gameStatusRef.current = 'gameover';
@@ -1775,7 +1782,7 @@ function RetroSpaceGame({ onClose }) {
             bestRef.current = lsGetBest();
             if (msgRef.current) msgRef.current.show('gameover');
           }
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
         }
       }
       for (let i = enemies.length - 1; i >= 0; i--) {
@@ -1788,7 +1795,11 @@ function RetroSpaceGame({ onClose }) {
         ) {
           e.alive = false;
           player.invincible = 90; player.flash = 18;
-          livesRef.current--;
+          player.health--;
+          if (player.health <= 0) {
+            livesRef.current--;
+            player.health = MAX_HEALTH;
+          }
           explosions.push(...createExplosion(player.x, player.y, 8));
           if (livesRef.current <= 0) {
             gameStatusRef.current = 'gameover';
@@ -1797,7 +1808,7 @@ function RetroSpaceGame({ onClose }) {
             bestRef.current = lsGetBest();
             if (msgRef.current) msgRef.current.show('gameover');
           }
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
         }
       }
 
@@ -1825,7 +1836,7 @@ function RetroSpaceGame({ onClose }) {
           s.waveKillTarget = 8 + waveRef.current * 2;
           s.enemiesKilled = 0;
           bannerRef.current = { text: `✦ LEVEL ${levelRef.current} — ENGAGE`, color: '#00ff88', timer: 150 };
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
         } else {
           boss.timer++;
           if (boss.flash > 0) boss.flash--;
@@ -1972,7 +1983,7 @@ function RetroSpaceGame({ onClose }) {
               boss.hp--;
               boss.flash = 6;
               if (boss.hp <= 0) boss.alive = false;
-              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
               break;
             }
           }
@@ -1985,7 +1996,11 @@ function RetroSpaceGame({ onClose }) {
             Math.abs(boss.y - player.y) < (boss.H + SHIP_H) / 2 - 10
           ) {
             player.invincible = 90; player.flash = 18;
-            livesRef.current--;
+            player.health--;
+            if (player.health <= 0) {
+              livesRef.current--;
+              player.health = MAX_HEALTH;
+            }
             explosions.push(...createExplosion(player.x, player.y, 8));
             if (livesRef.current <= 0) {
               gameStatusRef.current = 'gameover';
@@ -1993,7 +2008,7 @@ function RetroSpaceGame({ onClose }) {
               bestRef.current = lsGetBest();
               if (msgRef.current) msgRef.current.show('gameover');
             }
-            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health);
           }
         }
       }
@@ -2114,7 +2129,7 @@ function RetroSpaceGame({ onClose }) {
   /* ─ HUD + save state ─ */
   const existingSave = React.useMemo(() => lsGetSave(), []);
   const [hudState, setHudState] = React.useState({
-    score: 0, lives: MAX_LIVES, wave: 1, level: 1,
+    score: 0, lives: MAX_LIVES, health: MAX_HEALTH, wave: 1, level: 1,
     powerUps: { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
     best: lsGetBest(),
     boss: null,
@@ -2127,10 +2142,11 @@ function RetroSpaceGame({ onClose }) {
 
   React.useEffect(() => {
     hudRef.current = {
-      update: (score, lives, wave, level, powerUps, best) =>
+      update: (score, lives, wave, level, powerUps, best, health) =>
         setHudState({
           score,
           lives,
+          health: health ?? MAX_HEALTH,
           wave,
           level: level ?? 1,
           powerUps: powerUps || { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
@@ -2173,6 +2189,20 @@ function RetroSpaceGame({ onClose }) {
           <HudItem>
             <HudLabel>Lives</HudLabel>
             <HudValue color="#ff6666">{heartsStr}</HudValue>
+            <div style={{ display: 'flex', gap: 3, marginTop: 3 }}>
+              {Array.from({ length: MAX_HEALTH }, (_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 14,
+                    height: 4,
+                    borderRadius: 2,
+                    background: i < hudState.health ? '#22ff66' : 'rgba(255,255,255,0.12)',
+                    transition: 'background 0.2s',
+                  }}
+                />
+              ))}
+            </div>
           </HudItem>
         </HudGroup>
 
@@ -2287,7 +2317,7 @@ function AchievementBadgePersistent({ show }) {
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         >
           <BadgeDot />
-          🚀 RETRO_SPACE_UNLOCKED
+           RETRO_SPACE_UNLOCKED
         </AchievementUnlockedBadge>
       )}
     </AnimatePresence>
