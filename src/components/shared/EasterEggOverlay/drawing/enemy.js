@@ -19,6 +19,10 @@ export function drawEnemy(ctx, e) {
   ctx.save();
   ctx.translate(e.x, e.y);
 
+  if (e.cloaked) {
+    ctx.globalAlpha = 0.15 + 0.1 * Math.sin(Date.now() / 150);
+  }
+
   ctx.shadowColor = color;
   ctx.shadowBlur = 8 + 4 * pulse;
 
@@ -363,6 +367,194 @@ export function drawEnemy(ctx, e) {
 
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(-3, -ENEMY_H / 3, 6, 2);
+
+  } else if (shape === 'serpent') {
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, -ENEMY_H / 2 - 2, 4, 4);
+    const sLen2 = (7 + flk * 5) * flamePulse;
+    let sGrad2 = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - sLen2);
+    sGrad2.addColorStop(0, isFlashing ? '#ff8888' : color);
+    sGrad2.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+    sGrad2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sGrad2;
+    ctx.shadowColor = isFlashing ? '#ff4444' : color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 3, sLen2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 1.2, sLen2 * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for (let i = 0; i <= 12; i++) {
+      const seg = i / 12;
+      const sx2 = Math.sin(seg * Math.PI * 3 + timer * 0.08) * (ENEMY_W / 3.5);
+      const sy2 = -ENEMY_H / 2 + seg * ENEMY_H;
+      if (i === 0) ctx.moveTo(sx2, sy2);
+      else ctx.lineTo(sx2, sy2);
+    }
+    ctx.stroke();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = shadeColor(color, 40);
+    ctx.beginPath();
+    for (let i = 0; i <= 12; i++) {
+      const seg = i / 12;
+      const sx2 = Math.sin(seg * Math.PI * 3 + timer * 0.08) * (ENEMY_W / 3.5) + 2;
+      const sy2 = -ENEMY_H / 2 + seg * ENEMY_H + 1;
+      if (i === 0) ctx.moveTo(sx2, sy2);
+      else ctx.lineTo(sx2, sy2);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(0, -ENEMY_H / 3, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+  } else if (shape === 'cyclops') {
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-ENEMY_W / 4, -ENEMY_H / 2 - 2, 3, 4);
+    ctx.fillRect(ENEMY_W / 4, -ENEMY_H / 2 - 2, 3, 4);
+    for (const side of [-1, 1]) {
+      const cx = side * ENEMY_W / 4;
+      const cy = -ENEMY_H / 2 + 1;
+      const cLen = (6 + flk * 4) * flamePulse;
+      let cGrad = ctx.createLinearGradient(cx, cy, cx, cy - cLen);
+      cGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+      cGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+      cGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cGrad;
+      ctx.shadowColor = isFlashing ? '#ff4444' : color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 2.5, cLen, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 1, cLen * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    let bodyGrad2 = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, ENEMY_H / 2);
+    bodyGrad2.addColorStop(0, shadeColor(color, 30));
+    bodyGrad2.addColorStop(0.5, color);
+    bodyGrad2.addColorStop(1, shadeColor(color, -30));
+    ctx.fillStyle = bodyGrad2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 2.2, ENEMY_H / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = shadeColor(color, -20);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 2.2, ENEMY_H / 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const eyeR = ENEMY_W / 4;
+    let eyeGrad = ctx.createRadialGradient(0, -1, 1, 0, -1, eyeR);
+    eyeGrad.addColorStop(0, '#ffffff');
+    eyeGrad.addColorStop(0.2, '#ffffff');
+    eyeGrad.addColorStop(0.45, '#ef4444');
+    eyeGrad.addColorStop(0.7, shadeColor(color, -40));
+    eyeGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = eyeGrad;
+    ctx.beginPath();
+    ctx.arc(0, -1, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(0, -1, eyeR * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-eyeR * 0.15, -eyeR * 0.3, eyeR * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, -1, eyeR + 2, -0.5, 0.5);
+    ctx.stroke();
+
+  } else if (shape === 'manta') {
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, -ENEMY_H / 2 - 2, 3, 4);
+    const mLen = (6 + flk * 4) * flamePulse;
+    let mGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - mLen);
+    mGrad.addColorStop(0, isFlashing ? '#ff8888' : color);
+    mGrad.addColorStop(0.3, isFlashing ? '#ffaaaa' : shadeColor(color, 40));
+    mGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = mGrad;
+    ctx.shadowColor = isFlashing ? '#ff4444' : color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 3, mLen, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = isFlashing ? '#ffcccc' : '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 2, 1.2, mLen * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    let wingGrad2 = ctx.createLinearGradient(-ENEMY_W, 0, ENEMY_W, 0);
+    wingGrad2.addColorStop(0, shadeColor(color, -40));
+    wingGrad2.addColorStop(0.4, color);
+    wingGrad2.addColorStop(0.5, shadeColor(color, 30));
+    wingGrad2.addColorStop(0.6, color);
+    wingGrad2.addColorStop(1, shadeColor(color, -40));
+    ctx.fillStyle = wingGrad2;
+    ctx.beginPath();
+    ctx.moveTo(0, -ENEMY_H / 4);
+    ctx.quadraticCurveTo(-ENEMY_W / 1.6, -ENEMY_H / 3, -ENEMY_W / 1.1, ENEMY_H / 6);
+    ctx.quadraticCurveTo(-ENEMY_W / 2, ENEMY_H / 3, 0, ENEMY_H / 4);
+    ctx.quadraticCurveTo(ENEMY_W / 2, ENEMY_H / 3, ENEMY_W / 1.1, ENEMY_H / 6);
+    ctx.quadraticCurveTo(ENEMY_W / 1.6, -ENEMY_H / 3, 0, -ENEMY_H / 4);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-ENEMY_W / 2.5, ENEMY_H / 6);
+    ctx.quadraticCurveTo(0, -ENEMY_H / 6, ENEMY_W / 2.5, ENEMY_H / 6);
+    ctx.stroke();
+
+    let headGrad = ctx.createRadialGradient(0, -2, 1, 0, -2, ENEMY_W / 4);
+    headGrad.addColorStop(0, '#ffffff');
+    headGrad.addColorStop(0.4, color);
+    headGrad.addColorStop(1, 'rgba(0,0,0,0.5)');
+    ctx.fillStyle = headGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_H / 5, ENEMY_W / 5, ENEMY_H / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (const side of [-1, 1]) {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(side * ENEMY_W / 6, -ENEMY_H / 4, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const tailAng = Math.PI / 2 + (i - 1) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(0, ENEMY_H / 4);
+      ctx.lineTo(Math.cos(tailAng) * (ENEMY_W / 2), ENEMY_H / 2 + i * 3);
+      ctx.stroke();
+    }
 
   } else {
     const pts = [[-1,-1],[1,-1],[1,1],[-1,1]];

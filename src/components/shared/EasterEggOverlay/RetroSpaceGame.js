@@ -300,8 +300,12 @@ function RetroSpaceGame({ onClose }) {
         s.spawnTimer++;
         if (s.spawnTimer >= s.spawnInterval) {
           s.spawnTimer = 0;
-          enemies.push(spawnEnemy(W, H, waveRef.current));
-          s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
+          const maxOnScreen = 18 + waveRef.current * 2;
+          const spawnCount = waveRef.current >= 5 ? (Math.random() < 0.35 ? 3 : Math.random() < 0.5 ? 2 : 1) : 1;
+          for (let sp = 0; sp < spawnCount && enemies.length < maxOnScreen; sp++) {
+            enemies.push(spawnEnemy(W, H, waveRef.current));
+          }
+          s.spawnInterval = Math.max(28, 80 - waveRef.current * 5);
         }
       }
 
@@ -370,11 +374,91 @@ function RetroSpaceGame({ onClose }) {
         } else if (e.move === 'wobble') {
           e.vx = Math.sin(e.timer * 0.12) * 2;
           e.vy = e.baseSpeed * 0.85;
+        } else if (e.move === 'strafe') {
+          if (e.y < H * 0.15) { e.vy = e.baseSpeed * 0.6; e.vx = 0; }
+          else { e.vy = 0; e.vx = Math.sin(e.timer * 0.04) * e.baseSpeed * 1.4; }
+        } else if (e.move === 'orbit') {
+          if (!e.orbitCX) {
+            e.orbitCX = e.x;
+            e.orbitCY = Math.min(H * 0.35, e.y);
+            e.orbitR = 50 + Math.random() * 60;
+            e.orbitSpeed = 0.025 + Math.random() * 0.015;
+            e.vy = 0;
+          }
+          const ang = e.timer * e.orbitSpeed;
+          e.x = e.orbitCX + Math.cos(ang) * e.orbitR;
+          e.y = e.orbitCY + Math.sin(ang) * e.orbitR * 0.5;
+          e.vx = 0;
+        } else if (e.move === 'flank') {
+          const targetX = player.x + (e.x > player.x ? 120 : -120);
+          const dxFlank = targetX - e.x;
+          e.vx += dxFlank * 0.003;
+          e.vx = Math.max(-e.baseSpeed, Math.min(e.baseSpeed, e.vx));
+          if (e.y < H * 0.2) e.vy = e.baseSpeed * 0.5;
+          else if (e.y > H * 0.35) e.vy = -e.baseSpeed * 0.2;
+        } else if (e.move === 'swarm') {
+          let avgX = 0, avgY = 0, count = 0;
+          for (const other of enemies) {
+            if (other === e || !other.alive) continue;
+            const d = Math.abs(other.x - e.x) + Math.abs(other.y - e.y);
+            if (d < 120) { avgX += other.x; avgY += other.y; count++; }
+          }
+          if (count > 0) {
+            avgX /= count; avgY /= count;
+            e.vx += (avgX - e.x) * 0.0008;
+            e.vy += (avgY - e.y) * 0.0008;
+          }
+          const dxSwarm = player.x - e.x;
+          e.vx += dxSwarm * 0.0012;
+          e.vx = Math.max(-e.baseSpeed * 0.9, Math.min(e.baseSpeed * 0.9, e.vx));
+          e.vy = e.baseSpeed * 0.7;
+        } else if (e.move === 'telegraph') {
+          if (!e.telegraphState) { e.telegraphState = 'approach'; e.telegraphTimer = 0; }
+          e.telegraphTimer++;
+          if (e.telegraphState === 'approach') {
+            if (e.y < H * 0.25) e.vy = e.baseSpeed * 0.4;
+            else { e.vy = 0; e.telegraphState = 'charge'; e.telegraphTimer = 0; }
+          } else if (e.telegraphState === 'charge') {
+            if (e.telegraphTimer < 30) {
+              e.vx = 0; e.vy = 0;
+              e.flash = 1;
+            } else {
+              const dxTG = player.x - e.x;
+              const distTG = Math.sqrt(dxTG * dxTG + (player.y - e.y) * (player.y - e.y)) || 1;
+              e.vx = (dxTG / distTG) * e.baseSpeed * 2.5;
+              e.vy = ((player.y - e.y) / distTG) * e.baseSpeed * 2.5;
+              e.telegraphState = 'dash';
+              e.telegraphTimer = 0;
+            }
+          } else if (e.telegraphState === 'dash') {
+            if (e.telegraphTimer > 60) { e.telegraphState = 'approach'; e.telegraphTimer = 0; }
+          }
         }
         if (e.power === 'teleport' && e.timer % 140 === 0) {
           e.x += (Math.random() - 0.5) * 85;
           e.x = Math.max(40, Math.min(W - 40, e.x));
           explosions.push(...createExplosion(e.x, e.y, 4));
+        }
+        if (e.power === 'cloaker') {
+          e.cloaked = (e.timer % 200 > 140);
+        }
+        if (e.power === 'regen' && e.hp < e.maxHp && e.timer % 120 === 0) {
+          e.hp = Math.min(e.maxHp, e.hp + 1);
+        }
+        if (e.power === 'tractor') {
+          const dxTr = player.x - e.x;
+          const dyTr = player.y - e.y;
+          const distTr = Math.sqrt(dxTr * dxTr + dyTr * dyTr) || 1;
+          if (distTr < 250) {
+            player.x += (dxTr / distTr) * 0.6;
+            player.y += (dyTr / distTr) * 0.3;
+          }
+        }
+        if (e.power === 'clone' && e.hp <= 0 && !e.cloned) {
+          e.cloned = true;
+          for (let j = 0; j < 2; j++) {
+            enemies.push({ ...e, x: e.x + (j === 0 ? -18 : 18), y: e.y, hp: Math.max(1, Math.floor(e.maxHp * 0.5)), maxHp: Math.max(1, Math.floor(e.maxHp * 0.5)), timer: 0, shootTimer: 60 + Math.random() * 100, shield: 0, alive: true, power: 'normal' });
+          }
         }
         e.x += e.vx;
         e.y += e.vy;
@@ -398,6 +482,9 @@ function RetroSpaceGame({ onClose }) {
             enemyBullets.push({ x: e.x, y: e.y - ENEMY_H / 2, vx: 0, vy: -ENEMY_BULLET_SPEED * 0.8 });
           } else if (e.power === 'suicide') {
             e.shootTimer = 99999;
+          } else if (e.power === 'targeted') {
+            const tSpeed = ENEMY_BULLET_SPEED * 1.6;
+            enemyBullets.push({ x: e.x, y: e.y + ENEMY_H / 2, vx: (dx / dist) * tSpeed, vy: (dy / dist) * tSpeed });
           } else {
             enemyBullets.push({ x: e.x, y: e.y + ENEMY_H / 2, vx: (dx / dist) * ENEMY_BULLET_SPEED, vy: (dy / dist) * ENEMY_BULLET_SPEED });
           }
@@ -405,6 +492,7 @@ function RetroSpaceGame({ onClose }) {
 
         for (let b = bullets.length - 1; b >= 0; b--) {
           const bx = bullets[b].x, by = bullets[b].y;
+          if (e.cloaked) continue;
           if (bx > e.x - ENEMY_W / 2 && bx < e.x + ENEMY_W / 2 && by > e.y - ENEMY_H / 2 && by < e.y + ENEMY_H / 2) {
             bullets.splice(b, 1);
             if (e.shield > 0) { e.shield--; explosions.push(...createExplosion(bx, by, 3)); break; }
@@ -453,6 +541,7 @@ function RetroSpaceGame({ onClose }) {
 
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
+        if (!e.alive || e.cloaked) continue;
         const shielded = s.powerUps.SHIELD > 0;
         if (player.invincible <= 0 && !shielded && Math.abs(e.x - player.x) < (SHIP_W + ENEMY_W) / 2 - 6 && Math.abs(e.y - player.y) < (SHIP_H + ENEMY_H) / 2 - 6) {
           e.alive = false;
@@ -475,7 +564,7 @@ function RetroSpaceGame({ onClose }) {
           bestRef.current = lsGetBest();
           s.boss = null; s.bossActive = false; s.levelTimer = LEVEL_DURATION;
           levelRef.current++; waveRef.current++;
-          s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
+          s.spawnInterval = Math.max(28, 80 - waveRef.current * 5);
           s.waveKillTarget = 8 + waveRef.current * 2;
           s.enemiesKilled = 0;
           bannerRef.current = { text: `✦ LEVEL ${levelRef.current} — ENGAGE`, color: '#00ff88', timer: 150 };

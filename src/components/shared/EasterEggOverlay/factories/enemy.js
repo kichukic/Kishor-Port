@@ -1,7 +1,7 @@
 import { ENEMY_DEFS } from '../constants';
 
 export function spawnEnemy(W, H, wave) {
-  const maxIdx = Math.min(ENEMY_DEFS.length, 6 + wave * 3);
+  const maxIdx = Math.min(ENEMY_DEFS.length, 6 + wave * 4);
   const defIdx = Math.floor(Math.random() * maxIdx);
   const def = ENEMY_DEFS[defIdx];
 
@@ -30,6 +30,23 @@ export function spawnEnemy(W, H, wave) {
     vx = (Math.random() > 0.5 ? 1 : -1) * speed * 0.8;
   } else if (def.move === 'chase' || def.move === 'dash') {
     vx = 0;
+  } else if (def.move === 'strafe') {
+    vx = 0;
+    vy = speed * 0.4;
+  } else if (def.move === 'orbit') {
+    x = 80 + Math.random() * (W - 160);
+    y = -30;
+    vx = 0;
+    vy = speed * 0.3;
+  } else if (def.move === 'flank') {
+    vx = 0;
+  } else if (def.move === 'swarm') {
+    vx = (Math.random() - 0.5) * speed * 0.4;
+  } else if (def.move === 'telegraph') {
+    x = 60 + Math.random() * (W - 120);
+    y = -30;
+    vx = 0;
+    vy = speed * 0.3;
   }
 
   return {
