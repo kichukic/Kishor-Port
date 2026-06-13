@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { keyframes } from '@emotion/react';
 import { useSound } from '../../hooks/useSound';
 
+const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768);
+
 /* ─── STYLED SHELL ─── */
 const scanLines = keyframes`
   0% { background-position: 0 0; }
@@ -42,6 +44,7 @@ const GameCanvas = styled.canvas`
   display: block;
   image-rendering: pixelated;
   cursor: none;
+  touch-action: none;
 `;
 
 const GameUI = styled.div`
@@ -1755,6 +1758,7 @@ function RetroSpaceGame({ onClose }) {
       stars: createStars(W, H),
       asteroids: createAsteroids(W, H),
       keys: {},
+      touch: { active: false, originX: 0, originY: 0, dx: 0, dy: 0, fire: false },
       lastShot: 0,
       spawnTimer: 0,
       spawnInterval: Math.max(35, 90 - waveRef.current * 6),
@@ -1799,6 +1803,69 @@ function RetroSpaceGame({ onClose }) {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
+    /* ── Touch controls (mobile) ── */
+    const getTouchPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0] || e.changedTouches[0];
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    };
+
+    const onTouchStart = (e) => {
+      const s = stateRef.current;
+      if (!s) return;
+      e.preventDefault();
+      const pos = getTouchPos(e);
+      if (e.code === 'Escape') { onClose(); return; }
+
+      if (pos.x < s.W / 2) {
+        s.touch.active = true;
+        s.touch.originX = pos.x;
+        s.touch.originY = pos.y;
+        s.touch.dx = 0;
+        s.touch.dy = 0;
+      } else {
+        s.touch.fire = true;
+      }
+    };
+
+    const onTouchMove = (e) => {
+      const s = stateRef.current;
+      if (!s || !s.touch.active) return;
+      e.preventDefault();
+      const pos = getTouchPos(e);
+      const maxDist = 50;
+      let dx = pos.x - s.touch.originX;
+      let dy = pos.y - s.touch.originY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > maxDist) {
+        dx = (dx / dist) * maxDist;
+        dy = (dy / dist) * maxDist;
+      }
+      s.touch.dx = dx;
+      s.touch.dy = dy;
+    };
+
+    const onTouchEnd = (e) => {
+      const s = stateRef.current;
+      if (!s) return;
+      e.preventDefault();
+      const pos = getTouchPos(e);
+      if (pos.x >= s.W / 2) {
+        s.touch.fire = false;
+      } else {
+        s.touch.active = false;
+        s.touch.dx = 0;
+        s.touch.dy = 0;
+      }
+    };
+
+    if (isMobile) {
+      canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+      canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+      canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
+    }
+
     /* ══════════ GAME LOOP ══════════ */
     const loop = () => {
       const s = stateRef.current;
@@ -1814,13 +1881,29 @@ function RetroSpaceGame({ onClose }) {
       }
 
       /* ── Player movement (all 4 directions) ── */
-      if (keys['ArrowLeft']  || keys['KeyA']) player.vx = -PLAYER_SPEED;
-      else if (keys['ArrowRight'] || keys['KeyD']) player.vx = PLAYER_SPEED;
-      else player.vx *= 0.75;
+      if (isMobile && s.touch.active) {
+        const deadzone = 8;
+        const maxDist = 50;
+        const tdx = s.touch.dx;
+        const tdy = s.touch.dy;
+        const tdist = Math.sqrt(tdx * tdx + tdy * tdy);
+        if (tdist > deadzone) {
+          const ratio = Math.min(tdist, maxDist) / maxDist;
+          player.vx = (tdx / tdist) * PLAYER_SPEED * ratio;
+          player.vy = (tdy / tdist) * PLAYER_SPEED * ratio;
+        } else {
+          player.vx *= 0.75;
+          player.vy *= 0.75;
+        }
+      } else {
+        if (keys['ArrowLeft']  || keys['KeyA']) player.vx = -PLAYER_SPEED;
+        else if (keys['ArrowRight'] || keys['KeyD']) player.vx = PLAYER_SPEED;
+        else player.vx *= 0.75;
 
-      if (keys['ArrowUp']   || keys['KeyW']) player.vy = -PLAYER_SPEED;
-      else if (keys['ArrowDown']  || keys['KeyS']) player.vy = PLAYER_SPEED;
-      else player.vy *= 0.75;
+        if (keys['ArrowUp']   || keys['KeyW']) player.vy = -PLAYER_SPEED;
+        else if (keys['ArrowDown']  || keys['KeyS']) player.vy = PLAYER_SPEED;
+        else player.vy *= 0.75;
+      }
 
       player.x = Math.max(SHIP_W / 2, Math.min(W - SHIP_W / 2, player.x + player.vx));
       player.y = Math.max(SHIP_H / 2 + 48, Math.min(H - SHIP_H / 2, player.y + player.vy)); // 48 = HUD height
@@ -1834,7 +1917,8 @@ function RetroSpaceGame({ onClose }) {
 
       /* ── Shoot ── */
       const cooldown = s.powerUps.RAPIDFIRE > 0 ? BASE_SHOOT_COOLDOWN / 3 : BASE_SHOOT_COOLDOWN;
-      if ((keys['Space'] || keys['KeyZ']) && now - s.lastShot > cooldown) {
+      const wantFire = isMobile ? true : (keys['Space'] || keys['KeyZ']);
+      if (wantFire && now - s.lastShot > cooldown) {
         s.lastShot = now;
         if (s.powerUps.HOMING > 0) {
           // Fire 2 homing missiles
@@ -2478,6 +2562,39 @@ function RetroSpaceGame({ onClose }) {
         ctx.restore();
       }
 
+      /* ── Virtual joystick (mobile) ── */
+      if (isMobile) {
+        const joyR = 50;
+        const knobR = 18;
+        const joyX = joyR + 24;
+        const joyY = H - joyR - 24;
+
+        ctx.save();
+        ctx.globalAlpha = 0.2;
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(joyX, joyY, joyR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (s.touch.active) {
+          const clampedDx = Math.max(-joyR, Math.min(joyR, s.touch.dx));
+          const clampedDy = Math.max(-joyR, Math.min(joyR, s.touch.dy));
+          ctx.globalAlpha = 0.45;
+          ctx.fillStyle = '#00ffcc';
+          ctx.beginPath();
+          ctx.arc(joyX + clampedDx, joyY + clampedDy, knobR, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = '#00ffcc';
+          ctx.beginPath();
+          ctx.arc(joyX, joyY, knobR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
       /* ── Auto-save every 300 frames (~5s) ── */
       autoSaveTimerRef.current++;
       if (autoSaveTimerRef.current >= 300) {
@@ -2494,6 +2611,12 @@ function RetroSpaceGame({ onClose }) {
       window.removeEventListener('resize', resize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      if (isMobile) {
+        canvas.removeEventListener('touchstart', onTouchStart);
+        canvas.removeEventListener('touchmove', onTouchMove);
+        canvas.removeEventListener('touchend', onTouchEnd);
+        canvas.removeEventListener('touchcancel', onTouchEnd);
+      }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [initGame, onClose]);
@@ -2595,7 +2718,7 @@ function RetroSpaceGame({ onClose }) {
 
         <HudItem>
           <HudLabel>Controls</HudLabel>
-          <HudValue style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>←→ MOVE · SPACE FIRE</HudValue>
+          <HudValue style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>{isMobile ? 'DRAG TO MOVE · AUTO-FIRE' : '←→ MOVE · SPACE FIRE'}</HudValue>
         </HudItem>
       </GameUI>
 
