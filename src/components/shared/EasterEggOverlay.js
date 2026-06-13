@@ -413,6 +413,101 @@ function createStars(W, H) {
   return stars;
 }
 
+function createAsteroids(W, H) {
+  const asteroids = [];
+  for (let i = 0; i < 18; i++) {
+    asteroids.push(makeAsteroid(W, H, true));
+  }
+  return asteroids;
+}
+
+function makeAsteroid(W, H, randomY) {
+  const depth = 0.2 + Math.random() * 0.8;
+  const baseSize = 12 + depth * 48;
+  const verts = 7 + Math.floor(Math.random() * 5);
+  const points = [];
+  for (let v = 0; v < verts; v++) {
+    const angle = (v / verts) * Math.PI * 2;
+    const jitter = 0.5 + Math.random() * 0.5;
+    points.push({ x: Math.cos(angle) * jitter, y: Math.sin(angle) * jitter });
+  }
+  const hue = 18 + Math.random() * 35;
+  const sat = 8 + Math.random() * 18;
+  const light = 25 + Math.random() * 20;
+  const craterCount = 2 + Math.floor(Math.random() * 4);
+  const craters = [];
+  for (let c = 0; c < craterCount; c++) {
+    const ca = Math.random() * Math.PI * 2;
+    const cr = Math.random() * 0.6;
+    craters.push({
+      cx: Math.cos(ca) * cr,
+      cy: Math.sin(ca) * cr,
+      cr: 0.08 + Math.random() * 0.18,
+    });
+  }
+  return {
+    x: -40 + Math.random() * (W + 80),
+    y: randomY ? Math.random() * (H + 200) - 200 : -60 - Math.random() * 120,
+    depth,
+    scale: depth,
+    targetScale: depth,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.012 * (1 + (1 - depth)),
+    vy: (0.3 + depth * 1.8) * (0.7 + Math.random() * 0.6),
+    vx: (Math.random() - 0.5) * 0.3,
+    wobblePhase: Math.random() * Math.PI * 2,
+    wobbleSpeed: 0.005 + Math.random() * 0.01,
+    wobbleAmp: 0.2 + Math.random() * 0.4,
+    points,
+    hue, sat, light,
+    craters,
+    baseSize,
+    opacity: 0.2 + depth * 0.5,
+  };
+}
+
+function drawAsteroid(ctx, a, W, H) {
+  const size = a.baseSize * a.scale;
+  if (size < 2) return;
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(a.rotation);
+  ctx.globalAlpha = a.opacity * Math.min(1, a.scale / (a.depth * 0.6));
+
+  const grad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, size * 0.05, 0, 0, size);
+  grad.addColorStop(0, `hsl(${a.hue},${a.sat + 8}%,${a.light + 18}%)`);
+  grad.addColorStop(0.5, `hsl(${a.hue},${a.sat}%,${a.light}%)`);
+  grad.addColorStop(1, `hsl(${a.hue},${a.sat}%,${a.light - 12}%)`);
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(a.points[0].x * size, a.points[0].y * size);
+  for (let i = 1; i < a.points.length; i++) {
+    ctx.lineTo(a.points[i].x * size, a.points[i].y * size);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = `hsl(${a.hue},${a.sat + 5}%,${a.light + 10}%)`;
+  ctx.lineWidth = 0.5 + a.scale * 0.5;
+  ctx.stroke();
+
+  for (const cr of a.craters) {
+    const crSize = cr.cr * size;
+    if (crSize < 1) continue;
+    ctx.fillStyle = `hsla(${a.hue},${a.sat - 3}%,${a.light - 8}%,0.5)`;
+    ctx.beginPath();
+    ctx.arc(cr.cx * size, cr.cy * size, crSize, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `hsla(${a.hue},${a.sat + 5}%,${a.light + 5}%,0.3)`;
+    ctx.lineWidth = 0.4;
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 function spawnEnemy(W, H, wave) {
   const maxIdx = Math.min(ENEMY_DEFS.length, 6 + wave * 3);
   const defIdx = Math.floor(Math.random() * maxIdx);
@@ -1285,6 +1380,7 @@ function RetroSpaceGame({ onClose }) {
       crates: [],
       explosions: [],
       stars: createStars(W, H),
+      asteroids: createAsteroids(W, H),
       keys: {},
       lastShot: 0,
       spawnTimer: 0,
@@ -1386,6 +1482,20 @@ function RetroSpaceGame({ onClose }) {
         star.y += star.speed;
         if (star.y > H) { star.y = -2; star.x = Math.random() * W; }
       });
+
+      /* ── Asteroids ── */
+      for (let i = s.asteroids.length - 1; i >= 0; i--) {
+        const a = s.asteroids[i];
+        a.y += a.vy;
+        a.x += a.vx + Math.sin(a.wobblePhase) * a.wobbleAmp;
+        a.rotation += a.rotSpeed;
+        a.wobblePhase += a.wobbleSpeed;
+        const progress = 1 - (a.y / (H + 100));
+        a.scale = a.depth * Math.max(0.15, progress * 1.3);
+        if (a.y > H + 80) {
+          s.asteroids[i] = makeAsteroid(W, H, false);
+        }
+      }
 
       /* ── Bullet update ── */
       for (let i = bullets.length - 1; i >= 0; i--) {
@@ -1915,6 +2025,9 @@ function RetroSpaceGame({ onClose }) {
       }
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
+
+      // Asteroids
+      s.asteroids.forEach(a => drawAsteroid(ctx, a, W, H));
 
       // Crates
       crates.forEach(c => drawCrate(ctx, c));
