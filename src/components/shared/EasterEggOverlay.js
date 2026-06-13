@@ -248,7 +248,8 @@ const PLAYER_SPEED = 5;
 const BULLET_SPEED = 9;
 const MISSILE_SPEED = 6;
 const ENEMY_BULLET_SPEED = 3.5;
-const MAX_LIVES = 3;
+const MAX_LIVES = 4;
+const LIFE_DROP_CHANCE = 0.08;
 const BASE_SHOOT_COOLDOWN = 220;
 const CRATE_W = 26, CRATE_H = 26;
 const LEVEL_DURATION = 7200; // 2 minutes (120 seconds * 60 FPS)
@@ -365,14 +366,51 @@ const ENEMY_DEFS = [
 /* ════════════════════════════════════════════
    HELPERS
    ════════════════════════════════════════════ */
-function createStars(W, H, count = 120) {
-  return Array.from({ length: count }, () => ({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    r: 0.4 + Math.random() * 1.2,
-    speed: 0.3 + Math.random() * 1.2,
-    opacity: 0.2 + Math.random() * 0.6,
-  }));
+function createStars(W, H) {
+  const stars = [];
+  // Far layer — tiny, slow, dim
+  for (let i = 0; i < 65; i++) {
+    const roll = Math.random();
+    let hue = 0, sat = 0;
+    if (roll > 0.7) { hue = 215; sat = 50; }
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 0.3 + Math.random() * 0.5,
+      speed: 0.15 + Math.random() * 0.35,
+      opacity: 0.15 + Math.random() * 0.2,
+      hue, sat, glow: 0,
+    });
+  }
+  // Mid layer — medium, moderate speed
+  for (let i = 0; i < 45; i++) {
+    const roll = Math.random();
+    let hue = 0, sat = 0;
+    if (roll > 0.65) { hue = 215; sat = 65; }
+    else if (roll > 0.45) { hue = 45; sat = 60; }
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 0.5 + Math.random() * 0.7,
+      speed: 0.5 + Math.random() * 1.0,
+      opacity: 0.3 + Math.random() * 0.3,
+      hue, sat, glow: 3,
+    });
+  }
+  // Near layer — bright, fast, glowing
+  for (let i = 0; i < 22; i++) {
+    const roll = Math.random();
+    let hue = 0, sat = 0;
+    if (roll > 0.75) { hue = 215; sat = 75; }
+    else if (roll > 0.55) { hue = 45; sat = 70; }
+    else if (roll > 0.92) { hue = 0; sat = 65; }
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 1.0 + Math.random() * 1.0,
+      speed: 1.5 + Math.random() * 1.5,
+      opacity: 0.5 + Math.random() * 0.4,
+      hue, sat, glow: 6,
+    });
+  }
+  return stars;
 }
 
 function spawnEnemy(W, H, wave) {
@@ -761,6 +799,52 @@ function drawCrate(ctx, c) {
     ctx.fillStyle = info.color;
     ctx.beginPath();
     ctx.arc(0, CRATE_H / 2 + i * 5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+/* ─── DRAW: Life Pickup ─── */
+function drawLifePickup(ctx, lp) {
+  const t = Date.now() / 300;
+  const glow = 0.6 + 0.4 * Math.sin(t + lp.wobble);
+
+  ctx.save();
+  ctx.translate(lp.x, lp.y);
+  ctx.shadowColor = '#22ff66';
+  ctx.shadowBlur = 14 + 8 * glow;
+
+  // Outer ring
+  ctx.strokeStyle = `rgba(34, 255, 102, ${0.5 + 0.3 * glow})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 14, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Heart shape
+  ctx.fillStyle = '#22ff66';
+  ctx.beginPath();
+  ctx.moveTo(0, 4);
+  ctx.bezierCurveTo(-7, -1, -7, -7, 0, -5);
+  ctx.bezierCurveTo(7, -7, 7, -1, 0, 4);
+  ctx.fill();
+
+  // Inner white highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(-2.5, -3, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Falling trail dots
+  ctx.globalAlpha = 0.3;
+  ctx.shadowBlur = 0;
+  for (let i = 1; i <= 3; i++) {
+    ctx.fillStyle = '#22ff66';
+    ctx.beginPath();
+    ctx.arc(0, 12 + i * 5, 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1211,6 +1295,7 @@ function RetroSpaceGame({ onClose }) {
       waveKillTarget: 8 + waveRef.current * 2,
       powerUps: { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
       levelTimer: initialLevelTimer,
+      lifePickups: [],
     };
 
     if (hudRef.current) hudRef.current.update(
@@ -1391,6 +1476,28 @@ function RetroSpaceGame({ onClose }) {
         }
       }
 
+      /* ── Life pickup update ── */
+      for (let i = s.lifePickups.length - 1; i >= 0; i--) {
+        const lp = s.lifePickups[i];
+        lp.y += lp.vy;
+        lp.wobble += 0.04;
+
+        if (lp.y > H + 20) { s.lifePickups.splice(i, 1); continue; }
+
+        if (
+          Math.abs(lp.x - player.x) < (16 + SHIP_W / 2) &&
+          Math.abs(lp.y - player.y) < (16 + SHIP_H / 2)
+        ) {
+          if (livesRef.current < MAX_LIVES) {
+            livesRef.current++;
+          }
+          explosions.push(...createExplosion(lp.x, lp.y, 10));
+          s.lifePickups.splice(i, 1);
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          continue;
+        }
+      }
+
       /* ── Enemy update ── */
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
@@ -1520,6 +1627,14 @@ function RetroSpaceGame({ onClose }) {
               scoreRef.current += e.maxHp * 15;
               lsSetBest(scoreRef.current);
               bestRef.current = lsGetBest();
+              if (Math.random() < LIFE_DROP_CHANCE && livesRef.current < MAX_LIVES) {
+                s.lifePickups.push({
+                  x: e.x, y: e.y,
+                  vy: 1.2 + Math.random() * 0.5,
+                  wobble: Math.random() * Math.PI * 2,
+                  alive: true,
+                });
+              }
               if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
             }
             break;
@@ -1788,15 +1903,22 @@ function RetroSpaceGame({ onClose }) {
       ctx.fillRect(0, 0, W, H);
 
       // Stars
-      stars.forEach(star => {
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
         ctx.globalAlpha = star.opacity;
-        ctx.fillStyle = '#ffffff';
+        if (star.glow > 0) {
+          ctx.shadowColor = `hsla(${star.hue},${star.sat}%,80%,${star.opacity * 0.6})`;
+          ctx.shadowBlur = star.glow;
+        }
+        ctx.fillStyle = `hsla(${star.hue},${star.sat}%,${star.sat > 0 ? 85 : 97}%,1)`;
         ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill();
-      });
+      }
       ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
 
       // Crates
       crates.forEach(c => drawCrate(ctx, c));
+      s.lifePickups.forEach(lp => drawLifePickup(ctx, lp));
 
       // Enemy bullets
       enemyBullets.forEach(eb => {
