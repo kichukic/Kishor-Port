@@ -19,9 +19,15 @@ function AppContent() {
   const { theme } = useTheme();
   const { activated, showBanner, progress } = useKonamiCode();
   const [bootComplete, setBootComplete] = useState(false);
+  const [showGame, setShowGame] = useState(false);
   const { konamiKey, konamiFail } = useSound();
   const { muted } = useContext(AudioContext);
   const prevProgressRef = React.useRef(0);
+
+  // Open game when Konami banner fires
+  useEffect(() => {
+    if (showBanner) setShowGame(true);
+  }, [showBanner]);
 
   const handleBootComplete = useCallback(() => {
     setBootComplete(true);
@@ -79,8 +85,8 @@ function AppContent() {
             </div>
           </>
         )}
-        <EasterEggOverlay show={showBanner} />
-        <AchievementBadgePersistent show={activated && !showBanner} />
+        <EasterEggOverlay show={showGame} onClose={() => setShowGame(false)} />
+        <AchievementBadgePersistent show={activated && !showGame} />
         <AudioToggle />
       </EmotionThemeProvider>
     </MuiThemeProvider>
