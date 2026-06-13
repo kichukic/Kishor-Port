@@ -251,7 +251,15 @@ const ENEMY_BULLET_SPEED = 3.5;
 const MAX_LIVES = 3;
 const BASE_SHOOT_COOLDOWN = 220;
 const CRATE_W = 26, CRATE_H = 26;
-const POWERUP_DURATION = 600; // frames (~10s at 60fps)
+const POWERUP_DURATION = 600;
+const WAVES_PER_LEVEL = 3;   // boss every 3 waves
+
+// Boss configs indexed by level (cycles)
+const BOSS_DEFS = [
+  { name: 'SENTINEL',  hp: 20, score: 200, color: '#ff4444', W: 72, H: 52, speed: 1.4 },
+  { name: 'DESTROYER', hp: 35, score: 400, color: '#ff8800', W: 84, H: 64, speed: 1.8 },
+  { name: 'OVERLORD',  hp: 55, score: 600, color: '#cc44ff', W: 96, H: 76, speed: 2.2 },
+];
 
 // Power-up types
 const PU = {
@@ -260,6 +268,7 @@ const PU = {
   SHIELD:    { label: 'SHIELD',    color: '#ff44ff', icon: '◉' },
 };
 const PU_KEYS = Object.keys(PU);
+
 
 /* ════════════════════════════════════════════
    HELPERS
@@ -495,6 +504,159 @@ function drawBullet(ctx, b) {
   ctx.shadowBlur = 0;
 }
 
+/* ─── BOSS HELPERS ─── */
+function spawnBoss(W, level) {
+  const defIdx = (level - 1) % BOSS_DEFS.length;
+  const def = BOSS_DEFS[defIdx];
+  const tier = Math.floor((level - 1) / BOSS_DEFS.length); // extra laps
+  return {
+    x: W / 2,
+    y: -def.H,
+    vx: def.speed * (1 + tier * 0.2),
+    vy: def.speed * 0.5,
+    hp: def.hp + tier * 10,
+    maxHp: def.hp + tier * 10,
+    score: def.score + tier * 100,
+    name: def.name,
+    color: def.color,
+    W: def.W, H: def.H,
+    timer: 0,
+    shootTimer: 80,
+    phase: 1,        // 1 or 2 (triggers at 50% HP)
+    entering: true,  // still flying into the screen
+    alive: true,
+    tier,
+  };
+}
+
+function drawBoss(ctx, boss) {
+  const { x, y, W: BW, H: BH, color, hp, maxHp, phase, timer } = boss;
+  const t = Date.now() / 200;
+  const pulse = 0.8 + 0.2 * Math.sin(t);
+  const rage = phase === 2;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Outer hull glow
+  ctx.shadowColor = rage ? '#ff0000' : color;
+  ctx.shadowBlur = 20 + 10 * pulse;
+
+  if (boss.name === 'SENTINEL') {
+    // Wide flat saucer
+    ctx.fillStyle = rage ? `rgba(255,80,80,${pulse})` : `rgba(255,100,100,${pulse * 0.9})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 2, BH / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = rage ? '#ff4444' : color;
+    ctx.beginPath();
+    ctx.ellipse(0, -BH / 6, BW / 4, BH / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cannon ports
+    ctx.fillStyle = '#ffffff';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.arc(i * (BW / 5.5), BH / 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (boss.name === 'DESTROYER') {
+    // Angular destroyer hull
+    ctx.fillStyle = rage ? `rgba(255,140,0,${pulse})` : `rgba(255,160,80,${pulse * 0.9})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -BH / 2);
+    ctx.lineTo(-BW / 2, -BH / 6);
+    ctx.lineTo(-BW / 3, BH / 4);
+    ctx.lineTo(0, BH / 2);
+    ctx.lineTo(BW / 3, BH / 4);
+    ctx.lineTo(BW / 2, -BH / 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#000008';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 6, BH / 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = rage ? '#ff8800' : color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 12, BH / 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // OVERLORD — multi-wing form
+    ctx.fillStyle = rage ? `rgba(200,0,255,${pulse})` : `rgba(180,80,255,${pulse * 0.85})`;
+    // Central core
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 4, BH / 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Left wing
+    ctx.beginPath();
+    ctx.moveTo(-BW / 4, 0);
+    ctx.lineTo(-BW / 2, -BH / 3);
+    ctx.lineTo(-BW / 2, BH / 4);
+    ctx.closePath();
+    ctx.fill();
+    // Right wing
+    ctx.beginPath();
+    ctx.moveTo(BW / 4, 0);
+    ctx.lineTo(BW / 2, -BH / 3);
+    ctx.lineTo(BW / 2, BH / 4);
+    ctx.closePath();
+    ctx.fill();
+    // Core eye
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BW / 14, BH / 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Phase 2 rage ring
+  if (rage) {
+    ctx.strokeStyle = `rgba(255,0,0,${0.4 + 0.3 * Math.sin(t * 3)})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, BW / 2 + 10 + 4 * Math.sin(t * 4), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawBossHpBar(ctx, boss, W) {
+  const pct = boss.hp / boss.maxHp;
+  const barW = Math.min(W * 0.5, 400);
+  const barH = 6;
+  const bx = (W - barW) / 2;
+  const by = 52; // below HUD
+
+  // Track
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(bx, by, barW, barH);
+
+  // Fill color by HP%
+  const hpColor = pct > 0.6 ? '#ff4444' : pct > 0.3 ? '#ff8800' : '#ffcc00';
+  ctx.fillStyle = hpColor;
+  ctx.shadowColor = hpColor;
+  ctx.shadowBlur = 8;
+  ctx.fillRect(bx, by, barW * pct, barH);
+  ctx.shadowBlur = 0;
+
+  // Label
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = "bold 9px 'Courier New', monospace";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(`⚠ ${boss.name}${boss.phase === 2 ? ' — PHASE 2' : ''}`, W / 2, by - 3);
+}
+
+
+/* ─── LocalStorage helpers ─── */
+const LS_BEST  = 'retrospace_best';
+const LS_SAVE  = 'retrospace_save';
+
+function lsGetBest()  { return parseInt(localStorage.getItem(LS_BEST)  || '0', 10); }
+function lsSetBest(n) { if (n > lsGetBest()) localStorage.setItem(LS_BEST, String(n)); }
+function lsGetSave()  { try { return JSON.parse(localStorage.getItem(LS_SAVE)); } catch { return null; } }
+function lsSetSave(obj) { localStorage.setItem(LS_SAVE, JSON.stringify(obj)); }
+function lsClearSave()  { localStorage.removeItem(LS_SAVE); }
+
 /* ════════════════════════════════════════════
    GAME COMPONENT
    ════════════════════════════════════════════ */
@@ -505,42 +667,55 @@ function RetroSpaceGame({ onClose }) {
   const scoreRef = useRef(0);
   const livesRef = useRef(MAX_LIVES);
   const waveRef = useRef(1);
+  const levelRef = useRef(1);
   const gameStatusRef = useRef('playing');
   const hudRef = useRef(null);
   const msgRef = useRef(null);
+  const autoSaveTimerRef = useRef(0);
+  const bestRef = useRef(lsGetBest());
+  const bannerRef = useRef(null); // { text, color, timer }
 
-  const initGame = useCallback(() => {
+  const initGame = useCallback((resumeData) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const W = canvas.width, H = canvas.height;
 
-    scoreRef.current = 0;
-    livesRef.current = MAX_LIVES;
-    waveRef.current = 1;
+    scoreRef.current   = resumeData ? resumeData.score : 0;
+    livesRef.current   = resumeData ? resumeData.lives : MAX_LIVES;
+    waveRef.current    = resumeData ? resumeData.wave  : 1;
+    levelRef.current   = resumeData ? resumeData.level : 1;
     gameStatusRef.current = 'playing';
+    autoSaveTimerRef.current = 0;
+    bestRef.current = lsGetBest();
+
+    const waveKillTarget = resumeData ? (8 + waveRef.current * 2) : 8;
 
     stateRef.current = {
       W, H,
       player: { x: W / 2, y: H - 60, vx: 0, vy: 0, flash: 0, invincible: 0 },
-      bullets: [],       // { x, y, vx, vy, homing }
+      bullets: [],
       enemyBullets: [],
       enemies: [],
+      boss: null,
+      bossActive: false,
       crates: [],
       explosions: [],
       stars: createStars(W, H),
       keys: {},
       lastShot: 0,
       spawnTimer: 0,
-      spawnInterval: 90,
+      spawnInterval: Math.max(35, 90 - waveRef.current * 6),
       crateTimer: 0,
-      crateInterval: 420, // drop crate every ~7s
+      crateInterval: 420,
       enemiesKilled: 0,
-      waveKillTarget: 8,
-      // Power-up timers (frames remaining)
+      waveKillTarget,
       powerUps: { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
     };
 
-    if (hudRef.current) hudRef.current.update(0, MAX_LIVES, 1, { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 });
+    if (hudRef.current) hudRef.current.update(
+      scoreRef.current, livesRef.current, waveRef.current, levelRef.current,
+      { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 }, bestRef.current
+    );
     if (msgRef.current) msgRef.current.hide();
   }, []);
 
@@ -654,12 +829,14 @@ function RetroSpaceGame({ onClose }) {
         if (b.y < -20 || b.y > H + 20 || b.x < -20 || b.x > W + 20) bullets.splice(i, 1);
       }
 
-      /* ── Spawn enemies ── */
-      s.spawnTimer++;
-      if (s.spawnTimer >= s.spawnInterval) {
-        s.spawnTimer = 0;
-        enemies.push(spawnEnemy(W, H, waveRef.current));
-        s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
+      /* ── Spawn enemies (only when no boss active) ── */
+      if (!s.bossActive) {
+        s.spawnTimer++;
+        if (s.spawnTimer >= s.spawnInterval) {
+          s.spawnTimer = 0;
+          enemies.push(spawnEnemy(W, H, waveRef.current));
+          s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
+        }
       }
 
       /* ── Spawn crates ── */
@@ -689,7 +866,7 @@ function RetroSpaceGame({ onClose }) {
           }
           explosions.push(...createExplosion(c.x, c.y, 8));
           crates.splice(i, 1);
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, { ...s.powerUps });
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
           continue;
         }
       }
@@ -748,9 +925,22 @@ function RetroSpaceGame({ onClose }) {
                 waveRef.current++;
                 s.enemiesKilled = 0;
                 s.waveKillTarget = 8 + waveRef.current * 2;
+
+                // Boss wave?
+                if (waveRef.current % WAVES_PER_LEVEL === 0) {
+                  s.bossActive = true;
+                  const bossLevel = Math.ceil(waveRef.current / WAVES_PER_LEVEL);
+                  levelRef.current = bossLevel;
+                  s.boss = spawnBoss(W, bossLevel);
+                  s.enemies = [];
+                  s.enemyBullets = [];
+                  bannerRef.current = { text: `⚠ BOSS INCOMING — ${s.boss.name}`, color: s.boss.color, timer: 150 };
+                  if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+                  break;
+                }
               }
             }
-            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, { ...s.powerUps });
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
             break;
           }
         }
@@ -774,13 +964,14 @@ function RetroSpaceGame({ onClose }) {
           explosions.push(...createExplosion(player.x, player.y, 8));
           if (livesRef.current <= 0) {
             gameStatusRef.current = 'gameover';
+            lsSetBest(scoreRef.current);
+            lsClearSave();
+            bestRef.current = lsGetBest();
             if (msgRef.current) msgRef.current.show('gameover');
           }
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, { ...s.powerUps });
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
         }
       }
-
-      /* ── Direct enemy-player collision ── */
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         const shielded = s.powerUps.SHIELD > 0;
@@ -795,9 +986,144 @@ function RetroSpaceGame({ onClose }) {
           explosions.push(...createExplosion(player.x, player.y, 8));
           if (livesRef.current <= 0) {
             gameStatusRef.current = 'gameover';
+            lsSetBest(scoreRef.current);
+            lsClearSave();
+            bestRef.current = lsGetBest();
             if (msgRef.current) msgRef.current.show('gameover');
           }
-          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, { ...s.powerUps });
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+        }
+      }
+
+      /* ── BOSS UPDATE ── */
+      if (s.bossActive && s.boss) {
+        const boss = s.boss;
+
+        if (!boss.alive) {
+          // Boss defeated — big explosion
+          explosions.push(...createExplosion(boss.x, boss.y, 40));
+          for (let i = 0; i < 3; i++)
+            explosions.push(...createExplosion(
+              boss.x + (Math.random() - 0.5) * boss.W,
+              boss.y + (Math.random() - 0.5) * boss.H, 12
+            ));
+          scoreRef.current += boss.score;
+          lsSetBest(scoreRef.current);
+          bestRef.current = lsGetBest();
+          s.boss = null;
+          s.bossActive = false;
+          waveRef.current++;
+          levelRef.current = Math.ceil(waveRef.current / WAVES_PER_LEVEL);
+          s.spawnInterval = Math.max(35, 90 - waveRef.current * 6);
+          s.waveKillTarget = 8 + waveRef.current * 2;
+          s.enemiesKilled = 0;
+          bannerRef.current = { text: `✦ LEVEL ${levelRef.current} — ENGAGE`, color: '#00ff88', timer: 150 };
+          if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+        } else {
+          boss.timer++;
+
+          // Entry animation
+          if (boss.entering) {
+            boss.y += 2.5; // fast entry
+            if (boss.y >= 130) { boss.entering = false; }
+          } else {
+            // SENTINEL: left-right sweep
+            if (boss.name === 'SENTINEL') {
+              boss.x += boss.vx;
+              if (boss.x > W - boss.W / 2 - 20 || boss.x < boss.W / 2 + 20) boss.vx *= -1;
+              boss.y = 130 + 20 * Math.sin(boss.timer * 0.015);
+            }
+            // DESTROYER: sine wave float
+            else if (boss.name === 'DESTROYER') {
+              const spd = boss.phase === 2 ? 1.5 : 1;
+              boss.x = W / 2 + (W * 0.38) * Math.sin(boss.timer * 0.018 * spd);
+              boss.y = 140 + 40 * Math.sin(boss.timer * 0.025);
+            }
+            // OVERLORD: figure-8
+            else {
+              const spd = boss.phase === 2 ? 1.4 : 1;
+              boss.x = W / 2 + (W * 0.35) * Math.sin(boss.timer * 0.02 * spd);
+              boss.y = 140 + 55 * Math.sin(boss.timer * 0.04 * spd);
+            }
+
+            // Trigger Phase 2 at 50% HP
+            if (boss.hp <= boss.maxHp / 2 && boss.phase === 1) {
+              boss.phase = 2;
+              bannerRef.current = { text: `! ${boss.name} — PHASE 2 !`, color: '#ff2222', timer: 120 };
+            }
+          }
+
+          // Boss shoots (not while entering)
+          if (!boss.entering) {
+            const shootRate = boss.phase === 2 ? 35 : 65;
+            boss.shootTimer--;
+            if (boss.shootTimer <= 0) {
+              boss.shootTimer = shootRate;
+              const bspd = ENEMY_BULLET_SPEED + boss.tier * 0.5;
+
+              if (boss.name === 'SENTINEL') {
+                const shots = boss.phase === 2 ? 5 : 3;
+                for (let i = 0; i < shots; i++) {
+                  const ang = (Math.PI / 2) + (i - (shots - 1) / 2) * 0.28;
+                  enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+              } else if (boss.name === 'DESTROYER') {
+                const dx = player.x - boss.x, dy = player.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const shots = boss.phase === 2 ? 5 : 3;
+                for (let i = 0; i < shots; i++) {
+                  const spread = (Math.random() - 0.5) * 0.4;
+                  enemyBullets.push({ x: boss.x, y: boss.y + boss.H / 2, vx: (dx / dist) * bspd + spread, vy: (dy / dist) * bspd + spread });
+                }
+              } else {
+                // OVERLORD: spiral
+                const spiralCount = boss.phase === 2 ? 8 : 6;
+                for (let i = 0; i < spiralCount; i++) {
+                  const ang = (boss.timer * 0.06) + (i / spiralCount) * Math.PI * 2;
+                  enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(ang) * bspd, vy: Math.sin(ang) * bspd });
+                }
+                if (boss.phase === 2) {
+                  const dx = player.x - boss.x, dy = player.y - boss.y;
+                  const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                  enemyBullets.push({ x: boss.x, y: boss.y, vx: (dx / dist) * bspd * 1.4, vy: (dy / dist) * bspd * 1.4 });
+                }
+              }
+            }
+          }
+
+          // Player bullets hit boss
+          for (let b = bullets.length - 1; b >= 0; b--) {
+            const bx = bullets[b].x, by = bullets[b].y;
+            if (
+              bx > boss.x - boss.W / 2 && bx < boss.x + boss.W / 2 &&
+              by > boss.y - boss.H / 2 && by < boss.y + boss.H / 2
+            ) {
+              bullets.splice(b, 1);
+              boss.hp--;
+              if (boss.hp <= 0) boss.alive = false;
+              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+              break;
+            }
+          }
+
+          // Boss body collision with player
+          const bossShielded = s.powerUps.SHIELD > 0;
+          if (
+            player.invincible <= 0 && !bossShielded && boss.alive &&
+            Math.abs(boss.x - player.x) < (boss.W + SHIP_W) / 2 - 10 &&
+            Math.abs(boss.y - player.y) < (boss.H + SHIP_H) / 2 - 10
+          ) {
+            player.invincible = 90; player.flash = 18;
+            livesRef.current--;
+            explosions.push(...createExplosion(player.x, player.y, 8));
+            if (livesRef.current <= 0) {
+              gameStatusRef.current = 'gameover';
+              lsSetBest(scoreRef.current); lsClearSave();
+              bestRef.current = lsGetBest();
+              if (msgRef.current) msgRef.current.show('gameover');
+            }
+            if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current);
+          }
         }
       }
 
@@ -858,6 +1184,36 @@ function RetroSpaceGame({ onClose }) {
       });
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
+      // Boss
+      if (s.bossActive && s.boss) {
+        drawBoss(ctx, s.boss);
+        drawBossHpBar(ctx, s.boss, W);
+      }
+
+      // Incoming banner (BOSS / LEVEL UP)
+      if (bannerRef.current && bannerRef.current.timer > 0) {
+        const bn = bannerRef.current;
+        bn.timer--;
+        const alpha = bn.timer > 120 ? 1 : bn.timer / 120;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(0,0,8,0.72)';
+        ctx.fillRect(0, H / 2 - 36, W, 72);
+        ctx.font = "bold 22px 'Courier New', monospace";
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = bn.color;
+        ctx.shadowColor = bn.color; ctx.shadowBlur = 24;
+        ctx.fillText(bn.text, W / 2, H / 2);
+        ctx.restore();
+      }
+
+      /* ── Auto-save every 300 frames (~5s) ── */
+      autoSaveTimerRef.current++;
+      if (autoSaveTimerRef.current >= 300) {
+        autoSaveTimerRef.current = 0;
+        lsSetSave({ score: scoreRef.current, lives: livesRef.current, wave: waveRef.current, level: levelRef.current });
+      }
+
       rafRef.current = requestAnimationFrame(loop);
     };
 
@@ -871,25 +1227,36 @@ function RetroSpaceGame({ onClose }) {
     };
   }, [initGame, onClose]);
 
-  /* ─ HUD state ─ */
+  /* ─ HUD + save state ─ */
+  const existingSave = React.useMemo(() => lsGetSave(), []);
   const [hudState, setHudState] = React.useState({
-    score: 0, lives: MAX_LIVES, wave: 1,
+    score: 0, lives: MAX_LIVES, wave: 1, level: 1,
     powerUps: { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 },
+    best: lsGetBest(),
+    boss: null,
   });
-  const [msgState, setMsgState] = React.useState({ visible: false, type: null });
+  const [msgState, setMsgState] = React.useState(
+    existingSave
+      ? { visible: true, type: 'resume' }  // auto-show resume prompt
+      : { visible: false, type: null }
+  );
 
   React.useEffect(() => {
     hudRef.current = {
-      update: (score, lives, wave, powerUps) => setHudState({ score, lives, wave, powerUps: powerUps || { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 } }),
+      update: (score, lives, wave, level, powerUps, best, boss) =>
+        setHudState({ score, lives, wave, level: level ?? 1, powerUps: powerUps || { HOMING: 0, RAPIDFIRE: 0, SHIELD: 0 }, best: best ?? lsGetBest(), boss: boss ?? null }),
     };
     msgRef.current = {
       show: (type) => setMsgState({ visible: true, type }),
       hide: () => setMsgState({ visible: false, type: null }),
     };
+    // If no existing save, start immediately
+    if (!existingSave) initGame();
   }, []);
 
   const heartsStr = '♥'.repeat(Math.max(0, hudState.lives)) + '♡'.repeat(Math.max(0, MAX_LIVES - hudState.lives));
   const activePowerUps = PU_KEYS.filter(k => hudState.powerUps[k] > 0);
+  const isBossWave = hudState.wave > 0 && hudState.wave % WAVES_PER_LEVEL === 0;
 
   return (
     <>
@@ -898,6 +1265,14 @@ function RetroSpaceGame({ onClose }) {
           <HudItem>
             <HudLabel>Score</HudLabel>
             <HudValue>{String(hudState.score).padStart(6, '0')}</HudValue>
+          </HudItem>
+          <HudItem>
+            <HudLabel>Best</HudLabel>
+            <HudValue color="#ffcc00">{String(hudState.best).padStart(6, '0')}</HudValue>
+          </HudItem>
+          <HudItem>
+            <HudLabel>Level</HudLabel>
+            <HudValue color={isBossWave ? '#ff4444' : '#ff8844'}>{hudState.level}</HudValue>
           </HudItem>
           <HudItem>
             <HudLabel>Wave</HudLabel>
@@ -938,16 +1313,45 @@ function RetroSpaceGame({ onClose }) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <MsgTitle color={msgState.type === 'gameover' ? '#ff4444' : '#00ff88'}>
-            {msgState.type === 'gameover' ? 'GAME OVER' : 'YOU WIN'}
-          </MsgTitle>
-          <MsgSub>
-            FINAL SCORE: {String(hudState.score).padStart(6, '0')} | WAVE: {hudState.wave}
-          </MsgSub>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-            <MsgBtn onClick={() => { initGame(); setMsgState({ visible: false, type: null }); }}>↺ RESTART</MsgBtn>
-            <MsgBtn onClick={onClose}>✕ EXIT</MsgBtn>
-          </div>
+          {msgState.type === 'resume' ? (
+            <>
+              <MsgTitle color="#00eeff">SAVE DETECTED</MsgTitle>
+              <MsgSub>
+                WAVE {existingSave?.wave} · SCORE {String(existingSave?.score ?? 0).padStart(6, '0')} · LIVES {existingSave?.lives}
+                <br />
+                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>Continue your last run or start fresh?</span>
+              </MsgSub>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <MsgBtn onClick={() => {
+                  initGame(existingSave);
+                  setMsgState({ visible: false, type: null });
+                }}>▶ RESUME</MsgBtn>
+                <MsgBtn onClick={() => {
+                  lsClearSave();
+                  initGame();
+                  setMsgState({ visible: false, type: null });
+                }}>↺ NEW GAME</MsgBtn>
+                <MsgBtn onClick={onClose}>✕ EXIT</MsgBtn>
+              </div>
+            </>
+          ) : (
+            <>
+              <MsgTitle color={msgState.type === 'gameover' ? '#ff4444' : '#00ff88'}>
+                {msgState.type === 'gameover' ? 'GAME OVER' : 'YOU WIN'}
+              </MsgTitle>
+              <MsgSub>
+                FINAL SCORE: {String(hudState.score).padStart(6, '0')} | WAVE: {hudState.wave}
+                <br />
+                {hudState.score >= hudState.best && hudState.score > 0 && (
+                  <span style={{ color: '#ffcc00' }}>★ NEW HIGH SCORE!</span>
+                )}
+              </MsgSub>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <MsgBtn onClick={() => { lsClearSave(); initGame(); setMsgState({ visible: false, type: null }); }}>↺ RESTART</MsgBtn>
+                <MsgBtn onClick={onClose}>✕ EXIT</MsgBtn>
+              </div>
+            </>
+          )}
         </OverlayMessage>
       )}
 
