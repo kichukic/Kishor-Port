@@ -1,0 +1,119 @@
+export const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768);
+
+export const SHIP_W = 32, SHIP_H = 28;
+export const ENEMY_W = 28, ENEMY_H = 22;
+export const PLAYER_SPEED = 8;
+export const BULLET_SPEED = 9;
+export const MISSILE_SPEED = 6;
+export const ENEMY_BULLET_SPEED = 3.5;
+export const MAX_LIVES = 4;
+export const LIFE_DROP_CHANCE = 0.08;
+export const MAX_HEALTH = 3;
+export const BASE_SHOOT_COOLDOWN = 220;
+export const CRATE_W = 26, CRATE_H = 26;
+export const LEVEL_DURATION = 7200;
+export const WAVES_PER_LEVEL = 3;
+export const POWERUP_DURATION = 600;
+
+export const BOSS_DEFS = [
+  { name: 'SENTINEL',    hp: 65,  score: 200,  color: '#ff4444', W: 72,  H: 52,  speed: 1.4, shape: 'saucer',      move: 'sweep',     attack: 'spread' },
+  { name: 'DESTROYER',   hp: 110, score: 400,  color: '#ff8800', W: 84,  H: 64,  speed: 1.8, shape: 'destroyer',   move: 'sine',      attack: 'burst' },
+  { name: 'OVERLORD',    hp: 175, score: 600,  color: '#cc44ff', W: 96,  H: 76,  speed: 2.2, shape: 'overlord',    move: 'figure8',   attack: 'spiral' },
+  { name: 'VORTEX',      hp: 240, score: 800,  color: '#00f5ff', W: 80,  H: 80,  speed: 2.0, shape: 'vortex',      move: 'butterfly', attack: 'pods' },
+  { name: 'DOOMBRINGER', hp: 320, score: 1000, color: '#ff0055', W: 110, H: 90,  speed: 1.2, shape: 'heavy',       move: 'bounce',    attack: 'sweep' },
+  { name: 'ARMAGEDDON',  hp: 380, score: 1200, color: '#eab308', W: 100, H: 100, speed: 1.5, shape: 'star',        move: 'circle',    attack: 'ring' },
+  { name: 'TEMPEST',     hp: 440, score: 1400, color: '#06b6d4', W: 90,  H: 80,  speed: 2.4, shape: 'spikey',      move: 'sine',      attack: 'targeted' },
+  { name: 'GOLIATH',     hp: 500, score: 1600, color: '#f97316', W: 115, H: 95,  speed: 1.1, shape: 'heavy',       move: 'sweep',     attack: 'comb' },
+  { name: 'LEVIATHAN',   hp: 570, score: 1800, color: '#3b82f6', W: 120, H: 100, speed: 1.3, shape: 'carrier',     move: 'figure8',   attack: 'pods' },
+  { name: 'HYPERION',    hp: 640, score: 2000, color: '#a855f7', W: 95,  H: 85,  speed: 1.9, shape: 'tri_fighter', move: 'butterfly', attack: 'burst' },
+  { name: 'APOCALYPSE',  hp: 720, score: 2200, color: '#ef4444', W: 110, H: 110, speed: 1.6, shape: 'star',        move: 'bounce',    attack: 'spiral' },
+  { name: 'OBLIVION',    hp: 800, score: 2400, color: '#ec4899', W: 85,  H: 85,  speed: 2.5, shape: 'orb',         move: 'circle',    attack: 'ring' },
+  { name: 'RAGNAROK',    hp: 880, score: 2600, color: '#f59e0b', W: 105, H: 95,  speed: 1.7, shape: 'spikey',      move: 'swoop',     attack: 'sweep' },
+  { name: 'PROMETHEUS',  hp: 960, score: 2800, color: '#10b981', W: 95,  H: 95,  speed: 2.1, shape: 'destroyer',   move: 'sweep',     attack: 'comb' },
+  { name: 'VALKYRIE',    hp: 1050, score: 3000, color: '#06b6d4', W: 80,  H: 70,  speed: 2.7, shape: 'tri_fighter', move: 'sine',      attack: 'targeted' },
+  { name: 'NEMESIS',     hp: 1150, score: 3200, color: '#8b5cf6', W: 90,  H: 90,  speed: 2.0, shape: 'vortex',      move: 'figure8',   attack: 'spiral' },
+  { name: 'ECLIPSE',     hp: 1250, score: 3400, color: '#64748b', W: 100, H: 80,  speed: 1.8, shape: 'saucer',      move: 'circle',    attack: 'ring' },
+  { name: 'TITAN',       hp: 1360, score: 3600, color: '#d97706', W: 115, H: 105, speed: 1.3, shape: 'heavy',       move: 'bounce',    attack: 'burst' },
+  { name: 'KRAKEN',      hp: 1480, score: 3800, color: '#0284c7', W: 120, H: 100, speed: 1.5, shape: 'carrier',     move: 'swoop',     attack: 'pods' },
+  { name: 'BEHEMOTH',    hp: 1600, score: 4000, color: '#dc2626', W: 130, H: 110, speed: 1.0, shape: 'heavy',       move: 'sweep',     attack: 'sweep' },
+  { name: 'CENTURION',   hp: 1720, score: 4200, color: '#4f46e5', W: 95,  H: 85,  speed: 2.2, shape: 'destroyer',   move: 'butterfly', attack: 'targeted' },
+  { name: 'DREADNOUGHT', hp: 1850, score: 4400, color: '#b91c1c', W: 120, H: 100, speed: 1.2, shape: 'heavy',       move: 'bounce',    attack: 'comb' },
+  { name: 'ZEUS',        hp: 1980, score: 4600, color: '#eab308', W: 100, H: 100, speed: 2.3, shape: 'star',        move: 'figure8',   attack: 'spiral' },
+  { name: 'ODIN',        hp: 2120, score: 4800, color: '#38bdf8', W: 105, H: 95,  speed: 2.0, shape: 'overlord',    move: 'sine',      attack: 'pods' },
+  { name: 'CHIMERA',     hp: 2260, score: 5000, color: '#a855f7', W: 90,  H: 90,  speed: 2.4, shape: 'vortex',      move: 'circle',    attack: 'ring' },
+  { name: 'SPECTRE',     hp: 2400, score: 5200, color: '#94a3b8', W: 85,  H: 75,  speed: 2.6, shape: 'saucer',      move: 'butterfly', attack: 'burst' },
+  { name: 'PHANTOM',     hp: 2550, score: 5400, color: '#c084fc', W: 80,  H: 80,  speed: 2.8, shape: 'orb',         move: 'sine',      attack: 'targeted' },
+  { name: 'WRAITH',      hp: 2700, score: 5600, color: '#22d3ee', W: 85,  H: 75,  speed: 2.7, shape: 'tri_fighter', move: 'figure8',   attack: 'pods' },
+  { name: 'BANSHEE',     hp: 2860, score: 5800, color: '#f43f5e', W: 90,  H: 80,  speed: 2.5, shape: 'spikey',      move: 'swoop',     attack: 'sweep' },
+  { name: 'REAPER',      hp: 3020, score: 6000, color: '#4b5563', W: 100, H: 90,  speed: 1.9, shape: 'star',        move: 'sweep',     attack: 'spiral' },
+  { name: 'HARBINGER',   hp: 3190, score: 6200, color: '#ea580c', W: 110, H: 95,  speed: 1.6, shape: 'destroyer',   move: 'bounce',    attack: 'comb' },
+  { name: 'VANGUARD',    hp: 3360, score: 6400, color: '#16a34a', W: 95,  H: 85,  speed: 2.1, shape: 'tri_fighter', move: 'sine',      attack: 'burst' },
+  { name: 'DEVASTATOR',  hp: 3540, score: 6600, color: '#e11d48', W: 120, H: 105, speed: 1.3, shape: 'heavy',       move: 'figure8',   attack: 'ring' },
+  { name: 'CONQUEROR',   hp: 3720, score: 6800, color: '#4f46e5', W: 115, H: 100, speed: 1.5, shape: 'carrier',     move: 'butterfly', attack: 'pods' },
+  { name: 'INFINITY',    hp: 4000, score: 8000, color: '#06b6d4', W: 125, H: 110, speed: 1.8, shape: 'vortex',    move: 'swoop',     attack: 'spiral' },
+];
+
+export const PU = {
+  HOMING:    { label: 'HOMING',    color: '#00eeff', icon: '⬡' },
+  RAPIDFIRE: { label: 'RAPID',     color: '#ffcc00', icon: '◈' },
+  SHIELD:    { label: 'SHIELD',    color: '#ff44ff', icon: '◉' },
+};
+export const PU_KEYS = Object.keys(PU);
+
+export const ENEMY_DEFS = [
+  { name: 'Scout',          hp: 1, speed: 1.5, color: '#94a3b8', shape: 'tri',     move: 'straight', power: 'normal' },
+  { name: 'Drifter',        hp: 1, speed: 1.2, color: '#38bdf8', shape: 'saucer',  move: 'sine',     power: 'normal' },
+  { name: 'Interceptor',    hp: 2, speed: 2.2, color: '#f59e0b', shape: 'diamond', move: 'chase',    power: 'normal' },
+  { name: 'Void Striker',   hp: 1, speed: 3.0, color: '#8b5cf6', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Shield Drone',   hp: 3, speed: 1.0, color: '#ec4899', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Twin Gunner',    hp: 2, speed: 1.4, color: '#ef4444', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Kamikaze',       hp: 1, speed: 3.5, color: '#dc2626', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Ghost',          hp: 2, speed: 1.8, color: '#cbd5e1', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Bomber',         hp: 3, speed: 1.1, color: '#f97316', shape: 'heavy',   move: 'straight', power: 'bomb' },
+  { name: 'Weaver Swarm',   hp: 1, speed: 1.6, color: '#a855f7', shape: 'tri',     move: 'sine',     power: 'splitter' },
+  { name: 'Aegis Sentinel', hp: 4, speed: 0.9, color: '#22d3ee', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Striker X',      hp: 2, speed: 2.5, color: '#eab308', shape: 'cross',    move: 'zigzag',   power: 'normal' },
+  { name: 'Star Swarmer',   hp: 1, speed: 1.8, color: '#10b981', shape: 'spikey',   move: 'wobble',   power: 'normal' },
+  { name: 'Vortex Scout',   hp: 2, speed: 2.0, color: '#06b6d4', shape: 'saucer',  move: 'sine',     power: 'spread' },
+  { name: 'Hellbound',      hp: 3, speed: 2.2, color: '#ff0055', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Apex Drone',     hp: 3, speed: 1.5, color: '#8b5cf6', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Doom Seeker',    hp: 2, speed: 2.1, color: '#ef4444', shape: 'diamond', move: 'chase',    power: 'bomb' },
+  { name: 'Void Weaver',    hp: 2, speed: 1.7, color: '#a855f7', shape: 'saucer',  move: 'sine',     power: 'spread' },
+  { name: 'Nova Striker',   hp: 1, speed: 3.2, color: '#f43f5e', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Shield Swarm',   hp: 2, speed: 1.3, color: '#00f5ff', shape: 'orb',     move: 'wobble',   power: 'shielded' },
+  { name: 'Blink Fighter',  hp: 2, speed: 2.0, color: '#fcd34d', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Carrier Escort', hp: 4, speed: 1.1, color: '#38bdf8', shape: 'heavy',   move: 'straight', power: 'double' },
+  { name: 'Splitter Pod',   hp: 3, speed: 1.4, color: '#10b981', shape: 'saucer',  move: 'sine',     power: 'splitter' },
+  { name: 'Spectre Sentry', hp: 2, speed: 1.9, color: '#94a3b8', shape: 'cross',    move: 'wobble',   power: 'rear_shot' },
+  { name: 'Apocalypse Fly', hp: 2, speed: 2.8, color: '#dc2626', shape: 'tri',     move: 'chase',    power: 'suicide' },
+  { name: 'Solar Drone',    hp: 2, speed: 2.0, color: '#f59e0b', shape: 'spikey',   move: 'sine',     power: 'spread' },
+  { name: 'Nebula Weaver',  hp: 3, speed: 1.3, color: '#a855f7', shape: 'saucer',  move: 'wobble',   power: 'splitter' },
+  { name: 'Shadow Drone',   hp: 3, speed: 1.8, color: '#64748b', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Obsidian Orb',   hp: 5, speed: 0.8, color: '#111827', shape: 'orb',     move: 'straight', power: 'shielded' },
+  { name: 'Heavy Blast',    hp: 4, speed: 1.2, color: '#ef4444', shape: 'heavy',   move: 'sine',     power: 'bomb' },
+  { name: 'Pulsar Scout',   hp: 1, speed: 2.4, color: '#0ea5e9', shape: 'tri',     move: 'zigzag',   power: 'normal' },
+  { name: 'Quasar Fighter', hp: 3, speed: 2.0, color: '#ec4899', shape: 'diamond', move: 'chase',    power: 'normal' },
+  { name: 'Avenger Pod',    hp: 3, speed: 1.6, color: '#10b981', shape: 'saucer',  move: 'sine',     power: 'rear_shot' },
+  { name: 'Revenant Fly',   hp: 2, speed: 3.1, color: '#d97706', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Valkyrie Guard', hp: 4, speed: 1.5, color: '#22d3ee', shape: 'cross',    move: 'wobble',   power: 'spread' },
+  { name: 'Titan Swarm',    hp: 3, speed: 1.3, color: '#8b5cf6', shape: 'heavy',   move: 'straight', power: 'splitter' },
+  { name: 'Gladiator Orb',  hp: 4, speed: 1.1, color: '#f43f5e', shape: 'orb',     move: 'sine',     power: 'shielded' },
+  { name: 'Warlock Pod',    hp: 3, speed: 1.7, color: '#b91c1c', shape: 'saucer',  move: 'chase',    power: 'bomb' },
+  { name: 'Sonic Dasher',   hp: 2, speed: 3.4, color: '#06b6d4', shape: 'tri',     move: 'dash',     power: 'suicide' },
+  { name: 'Eclipse Sentry', hp: 3, speed: 1.8, color: '#4b5563', shape: 'diamond', move: 'zigzag',   power: 'teleport' },
+  { name: 'Solar Flare',    hp: 2, speed: 2.3, color: '#f59e0b', shape: 'spikey',   move: 'sine',     power: 'spread' },
+  { name: 'Nova Fighter',   hp: 3, speed: 2.2, color: '#eab308', shape: 'tri',     move: 'chase',    power: 'double' },
+  { name: 'Neutron Guard',  hp: 5, speed: 1.0, color: '#0ea5e9', shape: 'heavy',   move: 'straight', power: 'shielded' },
+  { name: 'Nebula Sentry',  hp: 3, speed: 1.5, color: '#a855f7', shape: 'saucer',  move: 'wobble',   power: 'rear_shot' },
+  { name: 'Comet Dasher',   hp: 2, speed: 3.6, color: '#dc2626', shape: 'tri',     move: 'dash',     power: 'speed_boost' },
+  { name: 'Apex Predator',  hp: 4, speed: 1.9, color: '#ec4899', shape: 'diamond', move: 'chase',    power: 'spread' },
+  { name: 'Warlord Drone',  hp: 5, speed: 1.2, color: '#b91c1c', shape: 'heavy',   move: 'sine',     power: 'double' },
+  { name: 'Goliath Heavy',  hp: 6, speed: 0.9, color: '#f97316', shape: 'heavy',   move: 'straight', power: 'bomb' },
+  { name: 'Tyrant Striker', hp: 3, speed: 2.7, color: '#d97706', shape: 'tri',     move: 'zigzag',   power: 'normal' },
+  { name: 'Chaos Weaver',   hp: 3, speed: 1.8, color: '#8b5cf6', shape: 'saucer',  move: 'sine',     power: 'splitter' },
+  { name: 'Apocalypse Guard',hp: 5, speed: 1.4, color: '#ef4444', shape: 'orb',     move: 'wobble',   power: 'shielded' },
+  { name: 'Omega Intercept', hp: 3, speed: 3.0, color: '#00f5ff', shape: 'diamond', move: 'chase',    power: 'suicide' },
+  { name: 'Quantum Void',   hp: 4, speed: 2.1, color: '#a855f7', shape: 'cross',    move: 'zigzag',   power: 'teleport' },
+  { name: 'Infinity Sentry',hp: 6, speed: 1.5, color: '#38bdf8', shape: 'heavy',   move: 'sine',     power: 'double' },
+  { name: 'Nemesis Drone',  hp: 4, speed: 2.3, color: '#ff0055', shape: 'spikey',   move: 'chase',    power: 'spread' },
+];

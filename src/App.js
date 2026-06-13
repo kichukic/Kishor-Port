@@ -7,7 +7,7 @@ import GlobalStyles from "./styles/GlobalStyles";
 import VideoBackground from "./components/shared/VideoBackground";
 import Home from "./pages/Home";
 import { useKonamiCode } from "./hooks/useKonamiCode";
-import { EasterEggOverlay, AchievementBadgePersistent } from "./components/shared/EasterEggOverlay";
+import { EasterEggOverlay, AchievementBadgePersistent } from "./components/shared/EasterEggOverlay/index";
 import BootSequence from "./components/shared/BootSequence";
 import AmbientOverlay from "./components/shared/AmbientOverlay";
 import AudioToggle from "./components/shared/AudioToggle";
