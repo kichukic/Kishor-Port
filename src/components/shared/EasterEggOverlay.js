@@ -782,61 +782,411 @@ function drawEnemy(ctx, e) {
   ctx.fillStyle = color;
 
   if (shape === 'tri') {
+    // 1. Engine exhaust
+    const flameL = 6 + Math.random() * 6;
+    let flameGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - flameL);
+    flameGrad.addColorStop(0, color);
+    flameGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = flameGrad;
     ctx.beginPath();
-    ctx.moveTo(0, ENEMY_H / 2);
-    ctx.lineTo(-ENEMY_W / 2, -ENEMY_H / 2);
-    ctx.lineTo(0, -ENEMY_H / 4);
-    ctx.lineTo(ENEMY_W / 2, -ENEMY_H / 2);
+    ctx.ellipse(0, -ENEMY_H / 2 + 2, 2.5, flameL, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Wings (dual color gradients for metallic feel)
+    let wingGrad = ctx.createLinearGradient(-ENEMY_W / 2, 0, ENEMY_W / 2, 0);
+    wingGrad.addColorStop(0, '#1e293b');
+    wingGrad.addColorStop(0.3, color);
+    wingGrad.addColorStop(0.5, '#f8fafc'); // highlight
+    wingGrad.addColorStop(0.7, color);
+    wingGrad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = wingGrad;
+
+    ctx.beginPath();
+    ctx.moveTo(0, ENEMY_H / 2); // Nose pointing DOWN
+    ctx.lineTo(-ENEMY_W / 2, -ENEMY_H / 2); // left wingtip
+    ctx.lineTo(-ENEMY_W / 4, -ENEMY_H / 6); // left wing notch
+    ctx.lineTo(0, -ENEMY_H / 2.5); // engine bay
+    ctx.lineTo(ENEMY_W / 4, -ENEMY_H / 6); // right wing notch
+    ctx.lineTo(ENEMY_W / 2, -ENEMY_H / 2); // right wingtip
     ctx.closePath();
     ctx.fill();
-  } else if (shape === 'saucer') {
+
+    // 3. Canopy cockpit
+    let canopyGrad = ctx.createLinearGradient(0, -2, 0, ENEMY_H / 3);
+    canopyGrad.addColorStop(0, '#ffffff');
+    canopyGrad.addColorStop(1, color);
+    ctx.fillStyle = canopyGrad;
     ctx.beginPath();
-    ctx.ellipse(0, 0, ENEMY_W / 2, ENEMY_H / 3.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(0, -2, ENEMY_W / 5.2, ENEMY_H / 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (shape === 'diamond') {
-    ctx.beginPath();
-    ctx.moveTo(0, ENEMY_H / 2);
-    ctx.lineTo(-ENEMY_W / 2, 0);
-    ctx.lineTo(0, -ENEMY_H / 2);
-    ctx.lineTo(ENEMY_W / 2, 0);
+    ctx.moveTo(0, ENEMY_H / 4);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(0, -4);
+    ctx.lineTo(3, 0);
     ctx.closePath();
     ctx.fill();
-  } else if (shape === 'orb') {
+
+    // 4. Panel lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.arc(0, 0, ENEMY_W / 2.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(0, 0, ENEMY_W / 3.3, 0, Math.PI * 2);
+    ctx.moveTo(-ENEMY_W / 3, -ENEMY_H / 3);
+    ctx.lineTo(0, ENEMY_H / 6);
+    ctx.lineTo(ENEMY_W / 3, -ENEMY_H / 3);
     ctx.stroke();
-  } else if (shape === 'spikey') {
+
+  } else if (shape === 'saucer') {
+    // 1. Bottom metallic base
+    let diskGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, ENEMY_W / 2);
+    diskGrad.addColorStop(0, '#475569');
+    diskGrad.addColorStop(0.7, color);
+    diskGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = diskGrad;
     ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 1.8, ENEMY_H / 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Neon ring groove
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 2.4, ENEMY_H / 4.2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 3. Cockpit dome
+    let domeGrad = ctx.createRadialGradient(0, -2, 1, 0, -2, ENEMY_W / 4.5);
+    domeGrad.addColorStop(0, '#ffffff');
+    domeGrad.addColorStop(0.4, color);
+    domeGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = domeGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -2, ENEMY_W / 4.5, ENEMY_H / 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4. Rotating perimeter lights
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 4; i++) {
+      const ang = (timer * 0.04) + (i * Math.PI) / 2;
+      const px = Math.cos(ang) * (ENEMY_W / 2.1);
+      const py = Math.sin(ang) * (ENEMY_H / 3.4);
+      ctx.beginPath();
+      ctx.arc(px, py, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (shape === 'diamond') {
+    // 4 shaded facets for crystalline look
+    const dw = ENEMY_W / 2;
+    const dh = ENEMY_H / 2;
+
+    // Top-Left facet
+    let g1 = ctx.createLinearGradient(-dw, 0, 0, 0);
+    g1.addColorStop(0, color); g1.addColorStop(1, '#ffffff');
+    ctx.fillStyle = g1;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(-dw, 0); ctx.lineTo(0, -dh); ctx.closePath(); ctx.fill();
+
+    // Top-Right facet
+    let g2 = ctx.createLinearGradient(dw, 0, 0, 0);
+    g2.addColorStop(0, color); g2.addColorStop(1, '#ffffff');
+    ctx.fillStyle = g2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(dw, 0); ctx.lineTo(0, -dh); ctx.closePath(); ctx.fill();
+
+    // Bottom-Left facet
+    let g3 = ctx.createLinearGradient(-dw, 0, 0, 0);
+    g3.addColorStop(0, color); g3.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = g3;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(-dw, 0); ctx.lineTo(0, dh); ctx.closePath(); ctx.fill();
+
+    // Bottom-Right facet
+    let g4 = ctx.createLinearGradient(dw, 0, 0, 0);
+    g4.addColorStop(0, color); g4.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = g4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(dw, 0); ctx.lineTo(0, dh); ctx.closePath(); ctx.fill();
+
+    // High intensity center core
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+  } else if (shape === 'orb') {
+    // 1. Outer curved shield wings
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(0, 0, ENEMY_W / 2.2, -Math.PI / 3, (4 * Math.PI) / 3);
+    ctx.stroke();
+
+    // 2. Metallic core
+    let ballGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, ENEMY_W / 3.2);
+    ballGrad.addColorStop(0, '#f8fafc');
+    ballGrad.addColorStop(0.3, color);
+    ballGrad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = ballGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, ENEMY_W / 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Horizontal lens/eye
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-ENEMY_W / 6, -1.5, ENEMY_W / 3, 3);
+
+    // 4. Orbiting energy dots
+    ctx.fillStyle = '#ffffff';
+    const ang = timer * 0.06;
+    ctx.beginPath();
+    ctx.arc(Math.cos(ang) * (ENEMY_W / 2.1), Math.sin(ang) * (ENEMY_W / 2.1), 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (shape === 'spikey') {
+    // 1. Inner core
+    let coreGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, ENEMY_W / 4.2);
+    coreGrad.addColorStop(0, '#ffffff');
+    coreGrad.addColorStop(0.5, color);
+    coreGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, ENEMY_W / 4.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Sharp vector spikes (8-point star with gradients)
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
     for (let i = 0; i < 8; i++) {
       const angle = (i * Math.PI) / 4 + (timer * 0.02);
       const r = i % 2 === 0 ? ENEMY_W / 2 : ENEMY_W / 3.5;
+      
+      let spGrad = ctx.createLinearGradient(0, 0, Math.cos(angle) * r, Math.sin(angle) * r);
+      spGrad.addColorStop(0, color);
+      spGrad.addColorStop(0.8, color);
+      spGrad.addColorStop(1, '#ffffff');
+      
+      ctx.strokeStyle = spGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
       ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+      ctx.stroke();
+
+      // Small glowing tip node
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * r, Math.sin(angle) * r, 1.5, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+  } else if (shape === 'heavy') {
+    // 1. Wing thrusters exhaust
+    ctx.fillStyle = 'rgba(255, 100, 0, 0.85)';
+    const flameH = 5 + Math.random() * 5;
+    ctx.fillRect(-ENEMY_W / 3 - 1, -ENEMY_H / 2 - flameH, 2.5, flameH);
+    ctx.fillRect(ENEMY_W / 3 - 1.5, -ENEMY_H / 2 - flameH, 2.5, flameH);
+
+    // 2. Armored wing plating
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(-ENEMY_W / 2, -ENEMY_H / 2.2, ENEMY_W / 4.5, ENEMY_H * 0.82);
+    ctx.fillRect(ENEMY_W / 2 - ENEMY_W / 4.5, -ENEMY_H / 2.2, ENEMY_W / 4.5, ENEMY_H * 0.82);
+
+    // 3. Central heavy chassis
+    let bodyGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, ENEMY_H / 2);
+    bodyGrad.addColorStop(0, '#1e293b');
+    bodyGrad.addColorStop(0.4, color);
+    bodyGrad.addColorStop(0.5, '#cbd5e1'); // highlight ridge
+    bodyGrad.addColorStop(0.6, color);
+    bodyGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = bodyGrad;
+
+    ctx.beginPath();
+    ctx.moveTo(0, ENEMY_H / 2); // heavy beak
+    ctx.lineTo(-ENEMY_W / 3.5, ENEMY_H / 4);
+    ctx.lineTo(-ENEMY_W / 3.5, -ENEMY_H / 2);
+    ctx.lineTo(ENEMY_W / 3.5, -ENEMY_H / 2);
+    ctx.lineTo(ENEMY_W / 3.5, ENEMY_H / 4);
     ctx.closePath();
     ctx.fill();
-  } else if (shape === 'heavy') {
-    ctx.fillRect(-ENEMY_W / 2, -ENEMY_H / 2, ENEMY_W / 3, ENEMY_H);
-    ctx.fillRect(ENEMY_W / 2 - ENEMY_W / 3, -ENEMY_H / 2, ENEMY_W / 3, ENEMY_H);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(-ENEMY_W / 4, -ENEMY_H / 3, ENEMY_W / 2, ENEMY_H * 0.6);
+
+    // 4. Panel warning decals
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-3, -ENEMY_H / 3, 6, 2);
+
   } else {
+    // Interceptor X-Wing
     ctx.strokeStyle = color;
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 2.2;
+
+    // Wing struts
     ctx.beginPath();
-    ctx.moveTo(-ENEMY_W / 2.5, -ENEMY_H / 2.5);
-    ctx.lineTo(ENEMY_W / 2.5, ENEMY_H / 2.5);
-    ctx.moveTo(-ENEMY_W / 2.5, ENEMY_H / 2.5);
-    ctx.lineTo(ENEMY_W / 2.5, -ENEMY_H / 2.5);
+    ctx.moveTo(-ENEMY_W / 2.1, -ENEMY_H / 2.1);
+    ctx.lineTo(ENEMY_W / 2.1, ENEMY_H / 2.1);
+    ctx.moveTo(ENEMY_W / 2.1, -ENEMY_H / 2.1);
+    ctx.lineTo(-ENEMY_W / 2.1, ENEMY_H / 2.1);
     ctx.stroke();
+
+    // Fuselage
+    let fusGrad = ctx.createLinearGradient(0, -ENEMY_H / 2.3, 0, ENEMY_H / 2.3);
+    fusGrad.addColorStop(0, '#0f172a');
+    fusGrad.addColorStop(0.5, color);
+    fusGrad.addColorStop(1, '#334155');
+    ctx.fillStyle = fusGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ENEMY_W / 5.2, ENEMY_H / 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing weapon node barrels
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-ENEMY_W / 2.1, ENEMY_H / 2.1, 2, 0, Math.PI * 2);
+    ctx.arc(ENEMY_W / 2.1, ENEMY_H / 2.1, 2, 0, Math.PI * 2);
+    ctx.arc(ENEMY_W / 2.1, -ENEMY_H / 2.1, 2, 0, Math.PI * 2);
+    ctx.arc(-ENEMY_W / 2.1, -ENEMY_H / 2.1, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Engine exhaust for all shapes
+  const flk = Math.random();
+  if (shape === 'tri') {
+    // Twin thruster jets from wing notches
+    for (const side of [-1, 1]) {
+      const fx = side * ENEMY_W / 4;
+      const fy = -ENEMY_H / 2.5;
+      const fLen = 5 + flk * 7;
+      const fGrad = ctx.createLinearGradient(fx, fy, fx, fy - fLen);
+      fGrad.addColorStop(0, color);
+      fGrad.addColorStop(0.3, '#ffffff');
+      fGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = fGrad;
+      ctx.beginPath();
+      ctx.moveTo(fx - 2, fy);
+      ctx.lineTo(fx, fy - fLen);
+      ctx.lineTo(fx + 2, fy);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (shape === 'saucer') {
+    // Tractor beam glow underneath + perimeter micro-thrusters
+    const tbGrad = ctx.createRadialGradient(0, ENEMY_H / 4, 1, 0, ENEMY_H / 4, ENEMY_W / 4);
+    tbGrad.addColorStop(0, `rgba(0,255,200,${0.3 + flk * 0.3})`);
+    tbGrad.addColorStop(1, 'rgba(0,255,200,0)');
+    ctx.fillStyle = tbGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, ENEMY_H / 4, ENEMY_W / 4, 6 + flk * 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 3 micro-thruster cones on top
+    for (let i = -1; i <= 1; i++) {
+      const tx = i * ENEMY_W / 5;
+      const tLen = 3 + flk * 4;
+      const tGrad = ctx.createLinearGradient(tx, -ENEMY_H / 3, tx, -ENEMY_H / 3 - tLen);
+      tGrad.addColorStop(0, '#ffffff');
+      tGrad.addColorStop(0.5, color);
+      tGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = tGrad;
+      ctx.beginPath();
+      ctx.moveTo(tx - 1.5, -ENEMY_H / 3);
+      ctx.lineTo(tx, -ENEMY_H / 3 - tLen);
+      ctx.lineTo(tx + 1.5, -ENEMY_H / 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (shape === 'diamond') {
+    // Crystal shard energy trail from top
+    const cLen = 6 + flk * 8;
+    const cGrad = ctx.createLinearGradient(0, -ENEMY_H / 2, 0, -ENEMY_H / 2 - cLen);
+    cGrad.addColorStop(0, '#ffffff');
+    cGrad.addColorStop(0.3, color);
+    cGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cGrad;
+    ctx.beginPath();
+    ctx.moveTo(-3, -ENEMY_H / 2);
+    ctx.lineTo(0, -ENEMY_H / 2 - cLen);
+    ctx.lineTo(3, -ENEMY_H / 2);
+    ctx.closePath();
+    ctx.fill();
+    // Side sparkles
+    ctx.fillStyle = `rgba(255,255,255,${0.3 + flk * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(-ENEMY_W / 3, -ENEMY_H / 4, 1 + flk, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ENEMY_W / 3, -ENEMY_H / 4, 1 + flk, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'orb') {
+    // Pulsing energy exhaust ring at top
+    const ringR = 4 + flk * 3;
+    ctx.strokeStyle = `rgba(255,255,255,${0.4 + flk * 0.4})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(0, -ENEMY_W / 2.2, ringR, 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner glow
+    const oGrad = ctx.createRadialGradient(0, -ENEMY_W / 2.5, 0, 0, -ENEMY_W / 2.5, 5);
+    oGrad.addColorStop(0, `rgba(255,255,255,${0.5 + flk * 0.3})`);
+    oGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = oGrad;
+    ctx.beginPath();
+    ctx.arc(0, -ENEMY_W / 2.5, 5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'spikey') {
+    // Tendril tip flares at top 3 spikes
+    for (let i = -1; i <= 1; i++) {
+      const angle = (timer * 0.02) + i * 0.4 - Math.PI / 2;
+      const tipX = Math.cos(angle) * ENEMY_W / 2;
+      const tipY = Math.sin(angle) * ENEMY_W / 2;
+      const fR = 2 + flk * 2;
+      const fGrad = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, fR);
+      fGrad.addColorStop(0, '#ffffff');
+      fGrad.addColorStop(0.5, color);
+      fGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = fGrad;
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, fR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (shape === 'heavy') {
+    // Dual heavy thruster exhausts from top
+    for (const side of [-1, 1]) {
+      const hx = side * ENEMY_W / 3;
+      const hy = -ENEMY_H / 2;
+      const hLen = 7 + flk * 8;
+      const hGrad = ctx.createLinearGradient(hx, hy, hx, hy - hLen);
+      hGrad.addColorStop(0, '#ff8800');
+      hGrad.addColorStop(0.2, '#ffffff');
+      hGrad.addColorStop(0.6, color);
+      hGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = hGrad;
+      ctx.beginPath();
+      ctx.moveTo(hx - 3, hy);
+      ctx.quadraticCurveTo(hx, hy - hLen, hx + 3, hy);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Center vent
+    const cvGrad = ctx.createRadialGradient(0, -ENEMY_H / 2, 0, 0, -ENEMY_H / 2, 4);
+    cvGrad.addColorStop(0, `rgba(255,200,100,${0.4 + flk * 0.3})`);
+    cvGrad.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = cvGrad;
+    ctx.beginPath();
+    ctx.arc(0, -ENEMY_H / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Cross: 4 wing-tip engine glows
+    const pts = [[-1,-1],[1,-1],[1,1],[-1,1]];
+    for (const [sx, sy] of pts) {
+      const ex = sx * ENEMY_W / 2.1;
+      const ey = sy * ENEMY_H / 2.1;
+      const eR = 2.5 + flk * 2;
+      const eGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, eR);
+      eGrad.addColorStop(0, '#ffffff');
+      eGrad.addColorStop(0.4, color);
+      eGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = eGrad;
+      ctx.beginPath();
+      ctx.arc(ex, ey, eR, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // HP Bar overlay for high HP targets
