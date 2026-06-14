@@ -44,3 +44,16 @@ export function createStars(W, H) {
   }
   return stars;
 }
+
+export function createNebulae(W, H) {
+  return [
+    { x: Math.random() * W, y: Math.random() * H * 0.6, r: 180 + Math.random() * 120, color: 'rgba(80,20,120,0.06)', speed: 0.08 + Math.random() * 0.05 },
+    { x: Math.random() * W, y: Math.random() * H * 0.6, r: 150 + Math.random() * 100, color: 'rgba(20,60,100,0.05)', speed: 0.06 + Math.random() * 0.04 },
+    { x: Math.random() * W, y: Math.random() * H * 0.6, r: 130 + Math.random() * 90, color: 'rgba(10,80,80,0.04)', speed: 0.05 + Math.random() * 0.03 },
+  ];
+}
+
+export function createShootingStars(W, H) {
+  return [];
+}
+

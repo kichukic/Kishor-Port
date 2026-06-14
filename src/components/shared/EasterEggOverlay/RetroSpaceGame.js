@@ -6,19 +6,50 @@ import {
   MAX_LIVES, MAX_HEALTH, BASE_SHOOT_COOLDOWN, CRATE_W, CRATE_H,
   LEVEL_DURATION, POWERUP_DURATION, LIFE_DROP_CHANCE,
   PU, PU_KEYS, COMBO_TIMEOUT, COMBO_MAX, BEAM_DURATION, GHOST_DURATION, MAGNET_DURATION, SCORE2X_DURATION,
+  BOSS_DEFS,
 } from './constants';
 import {
   GameUI, GameCanvas, HudGroup, HudItem, HudLabel, HudValue,
   PowerUpBar, PowerChip, PowerTimerTrack, PowerTimerFill,
   EscHint, GameTitle, OverlayMessage, MsgTitle, MsgSub, MsgBtn,
 } from './styles';
-import { createStars } from './factories/stars';
+import { createStars, createNebulae, createShootingStars } from './factories/stars';
 import { createAsteroids, makeAsteroid } from './factories/asteroids';
 import { spawnEnemy } from './factories/enemy';
 import { spawnCrate } from './factories/crate';
 import { spawnBoss, spawnMiniBoss } from './factories/boss';
 import { createExplosion } from './factories/explosions';
 import { lsGetBest, lsSetBest, lsGetSave, lsSetSave, lsClearSave } from './utils/localStorage';
+import { ACHIEVEMENTS, getUnlocked, unlock } from './achievements';
+import { createRunStats, saveRunStats, getAccuracy } from './stats';
+
+function checkAchievements(state, scoreRef, waveRef, levelRef) {
+  const { runStats, achievementTimers } = state;
+  const checks = [
+    ['first_blood',       () => runStats.kills >= 1],
+    ['century',           () => runStats.kills >= 100],
+    ['combo_king',        () => runStats.highestCombo >= 5],
+    ['boss_slayer',       () => runStats.bossesKilled >= 1],
+    ['survivor',          () => waveRef.current >= 10],
+    ['marathon',          () => waveRef.current >= 25],
+    ['ghost_protocol',    () => runStats.slowsUsed >= 5 || state.powerUps.GHOST > 0],
+    ['overdrive_master',  () => runStats.overdrivesUsed >= 10],
+    ['collector',         () => runStats.powerUpsCollected >= 50],
+    ['millionaire',       () => scoreRef.current >= 100000],
+    ['miniboss_hunter',   () => runStats.miniBossesKilled >= 5],
+    ['bombardier',        () => runStats.bombsUsed >= 10],
+    ['victory',           () => levelRef.current > 35],
+  ];
+  for (const [id, fn] of checks) {
+    if (fn() && !achievementTimers[id] && unlock(id)) {
+      achievementTimers[id] = true;
+      const def = ACHIEVEMENTS.find(a => a.id === id);
+      if (def) {
+        state.newAchievements.push({ ...def, timer: 300 });
+      }
+    }
+  }
+}
 import { drawShip } from './drawing/ship';
 import { drawEnemy } from './drawing/enemy';
 import { drawCrate } from './drawing/crate';
@@ -43,6 +74,7 @@ function RetroSpaceGame({ onClose }) {
   const bestRef = useRef(lsGetBest());
   const bannerRef = useRef(null);
   const initRef = useRef(false);
+  const gameStartTimeRef = useRef(Date.now());
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
@@ -56,6 +88,7 @@ function RetroSpaceGame({ onClose }) {
     waveRef.current    = resumeData ? resumeData.wave  : 1;
     levelRef.current   = resumeData ? resumeData.level : 1;
     gameStatusRef.current = 'playing';
+    gameStartTimeRef.current = Date.now();
     autoSaveTimerRef.current = 0;
     bestRef.current = lsGetBest();
 
@@ -75,9 +108,12 @@ function RetroSpaceGame({ onClose }) {
       crates: [],
       explosions: [],
       stars: createStars(W, H),
+      nebulae: createNebulae(W, H),
+      shootingStars: createShootingStars(W, H),
+      shootingStarTimer: 0,
       asteroids: createAsteroids(W, H),
       keys: {},
-      touch: { active: false, originX: 0, originY: 0, dx: 0, dy: 0, fire: false },
+      touch: { active: false, originX: 0, originY: 0, dx: 0, dy: 0, fire: false, lastTap: 0 },
       lastShot: 0,
       spawnTimer: 0,
       spawnInterval: Math.max(35, 90 - waveRef.current * 6),
@@ -97,6 +133,21 @@ function RetroSpaceGame({ onClose }) {
       particles: [],
       spawnCycle: 0,
       abilities: { bombCD: 0, slowCD: 0, overdriveCD: 0, slowActive: 0, overdriveActive: 0 },
+      hitStop: 0,
+      screenFlash: 0,
+      paused: false,
+      deathPieces: [],
+      deathTimer: 0,
+      intermission: null,
+      waveKills: 0,
+      hazard: null,
+      runStats: createRunStats(),
+      newAchievements: [],
+      achievementTimers: {},
+      noDamageHits: 0,
+      gameMode: 'normal',
+      endlessCycle: 0,
+      bossRushIndex: 0,
     };
 
     if (hudRef.current) hudRef.current.update(
@@ -134,6 +185,8 @@ function RetroSpaceGame({ onClose }) {
       if (!s) return;
       s.keys[e.code] = true;
       if (e.code === 'Escape') { onCloseRef.current(); return; }
+      if (e.code === 'KeyP') { s.paused = !s.paused; return; }
+      if (s.paused) return;
       if (e.code === 'KeyQ' && s.abilities.bombCD <= 0) {
         s.abilities.bombCD = 900;
         s.enemyBullets.length = 0;
@@ -142,18 +195,25 @@ function RetroSpaceGame({ onClose }) {
         if (s.miniBossActive && s.miniBoss && s.miniBoss.alive) { s.miniBoss.hp -= 2; s.miniBoss.flash = 8; }
         s.shakeX = 8; s.shakeY = 8; s.shakeDecay = 0.88;
         s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '💥 BOMB!', color: '#f59e0b', life: 60, vy: -1.5 });
+        s.runStats.bombsUsed++;
+        return;
       }
       if (e.code === 'KeyE' && s.abilities.slowCD <= 0 && s.abilities.slowActive <= 0) {
         s.abilities.slowCD = 1200;
         s.abilities.slowActive = 180;
         s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '⏱ SLOW!', color: '#06b6d4', life: 60, vy: -1.5 });
+        s.runStats.slowsUsed++;
+        return;
       }
       if (e.code === 'KeyR' && s.abilities.overdriveCD <= 0 && s.abilities.overdriveActive <= 0) {
         s.abilities.overdriveCD = 1500;
         s.abilities.overdriveActive = 300;
         s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '⚡ OVERDRIVE!', color: '#f59e0b', life: 60, vy: -1.5 });
+        s.runStats.overdrivesUsed++;
+        return;
       }
-      e.preventDefault();
+      const gameKeys = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyA','KeyD','KeyW','KeyS','Space','KeyZ','KeyQ','KeyE','KeyR'];
+      if (gameKeys.includes(e.code)) e.preventDefault();
     };
     const onKeyUp = (e) => {
       if (stateRef.current) stateRef.current.keys[e.code] = false;
@@ -172,6 +232,52 @@ function RetroSpaceGame({ onClose }) {
       if (!s) return;
       e.preventDefault();
       const pos = getTouchPos(e);
+
+      if (pos.x >= s.W / 2) {
+        const now = Date.now();
+        if (now - s.touch.lastTap < 300) {
+          s.paused = !s.paused;
+          s.touch.lastTap = 0;
+          return;
+        }
+        s.touch.lastTap = now;
+
+        const btnR = 22;
+        const abY = s.H - btnR - 24;
+        const abGap = btnR * 2 + 12;
+        const abStartX = s.W - btnR - 24 - abGap * 2;
+        const abilityKeys = ['bomb', 'slow', 'overdrive'];
+        const abilityCDKeys = ['bombCD', 'slowCD', 'overdriveCD'];
+        for (let ai = 0; ai < 3; ai++) {
+          const bx = abStartX + ai * abGap;
+          const dx = pos.x - bx, dy = pos.y - abY;
+          if (Math.sqrt(dx * dx + dy * dy) < btnR + 8) {
+            const key = abilityKeys[ai];
+            const cdKey = abilityCDKeys[ai];
+            if (key === 'bomb' && s.abilities[cdKey] <= 0) {
+              s.abilities.bombCD = 900;
+              s.enemyBullets.length = 0;
+              for (const en of s.enemies) { en.hp -= 2; if (en.hp <= 0) en.alive = false; }
+              if (s.bossActive && s.boss && s.boss.alive) { s.boss.hp -= 2; s.boss.flash = 8; }
+              if (s.miniBossActive && s.miniBoss && s.miniBoss.alive) { s.miniBoss.hp -= 2; s.miniBoss.flash = 8; }
+              s.shakeX = 8; s.shakeY = 8; s.shakeDecay = 0.88;
+        s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '💥 BOMB!', color: '#f59e0b', life: 60, vy: -1.5 });
+        s.runStats.bombsUsed++;
+            } else if (key === 'slow' && s.abilities[cdKey] <= 0 && s.abilities.slowActive <= 0) {
+              s.abilities.slowCD = 1200;
+              s.abilities.slowActive = 180;
+        s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '⏱ SLOW!', color: '#06b6d4', life: 60, vy: -1.5 });
+        s.runStats.slowsUsed++;
+            } else if (key === 'overdrive' && s.abilities[cdKey] <= 0 && s.abilities.overdriveActive <= 0) {
+              s.abilities.overdriveCD = 1500;
+              s.abilities.overdriveActive = 300;
+        s.floatingTexts.push({ x: s.player.x, y: s.player.y - 30, text: '⚡ OVERDRIVE!', color: '#f59e0b', life: 60, vy: -1.5 });
+        s.runStats.overdrivesUsed++;
+            }
+            return;
+          }
+        }
+      }
 
       if (pos.x < s.W / 2) {
         s.touch.active = true;
@@ -231,6 +337,130 @@ function RetroSpaceGame({ onClose }) {
       const now = Date.now();
 
       if (gameStatusRef.current !== 'playing') {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.hitStop > 0) {
+        s.hitStop--;
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.paused) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,8,0.7)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.font = "bold 32px 'Courier New', monospace";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 20;
+        ctx.fillText('PAUSED', W / 2, H / 2 - 20);
+        ctx.shadowBlur = 0;
+        ctx.font = "14px 'Courier New', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('PRESS P OR DOUBLE-TAP TO RESUME', W / 2, H / 2 + 25);
+        ctx.restore();
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.deathTimer > 0) {
+        s.deathTimer--;
+        for (let i = s.deathPieces.length - 1; i >= 0; i--) {
+          const dp = s.deathPieces[i];
+          dp.x += dp.vx; dp.y += dp.vy;
+          dp.rot += dp.rotSpeed;
+          dp.life -= dp.decay;
+          if (dp.life <= 0) s.deathPieces.splice(i, 1);
+        }
+        for (let i = explosions.length - 1; i >= 0; i--) {
+          const ex = explosions[i];
+          ex.x += ex.vx; ex.y += ex.vy;
+          ex.vx *= 0.93; ex.vy *= 0.93;
+          ex.life -= ex.decay;
+          if (ex.life <= 0) explosions.splice(i, 1);
+        }
+        for (let i = s.particles.length - 1; i >= 0; i--) {
+          const p = s.particles[i];
+          p.x += p.vx; p.y += p.vy;
+          p.vx *= 0.95; p.vy *= 0.95;
+          p.life -= p.decay;
+          if (p.life <= 0) s.particles.splice(i, 1);
+        }
+        ctx.save();
+        ctx.fillStyle = '#000008';
+        ctx.fillRect(0, 0, W, H);
+        for (const dp of s.deathPieces) {
+          ctx.globalAlpha = dp.life;
+          ctx.save();
+          ctx.translate(dp.x, dp.y);
+          ctx.rotate(dp.rot);
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.moveTo(0, -8);
+          ctx.lineTo(-6, 6);
+          ctx.lineTo(0, 3);
+          ctx.lineTo(6, 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        explosions.forEach(ex => {
+          ctx.globalAlpha = ex.life * 0.85;
+          ctx.fillStyle = ex.color || '#ffffff';
+          ctx.shadowColor = ex.color || '#ffffff';
+          ctx.shadowBlur = 6;
+          ctx.beginPath();
+          ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        s.particles.forEach(p => {
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.deathPieces.length > 0) s.deathPieces.length = 0;
+
+      if (s.intermission) {
+        s.intermission.timer--;
+        const bn = s.intermission;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,8,0.8)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.font = "bold 28px 'Courier New', monospace";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.fillText(`LEVEL ${bn.level} CLEAR`, W / 2, H / 2 - 30);
+        ctx.shadowBlur = 0;
+        ctx.font = "14px 'Courier New', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(`NEXT: LEVEL ${levelRef.current}`, W / 2, H / 2 + 10);
+        if (bn.timer < 40) {
+          ctx.globalAlpha = (40 - bn.timer) / 40;
+          ctx.fillText('GET READY...', W / 2, H / 2 + 40);
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+        if (s.intermission.timer <= 0) {
+          s.intermission = null;
+          s.levelTimer = LEVEL_DURATION;
+          bannerRef.current = { text: `✦ LEVEL ${levelRef.current} — ENGAGE`, color: '#00ff88', timer: 150 };
+        }
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
@@ -297,6 +527,7 @@ function RetroSpaceGame({ onClose }) {
           }
         } else {
           bullets.push({ x: player.x, y: player.y - SHIP_H / 2 - 2, vx: 0, vy: -BULLET_SPEED, homing: false });
+          s.runStats.shotsFired++;
           if (s.powerUps.RAPIDFIRE > 0) {
             bullets.push({ x: player.x - 12, y: player.y - SHIP_H / 4, vx: -0.8, vy: -BULLET_SPEED * 0.9, homing: false });
             bullets.push({ x: player.x + 12, y: player.y - SHIP_H / 4, vx: 0.8, vy: -BULLET_SPEED * 0.9, homing: false });
@@ -356,8 +587,8 @@ function RetroSpaceGame({ onClose }) {
           if (s.levelTimer === 0) {
             s.bossActive = true;
             s.boss = spawnBoss(W, levelRef.current);
-            s.enemies = [];
-            s.enemyBullets = [];
+            s.enemies.length = 0;
+            s.enemyBullets.length = 0;
             bannerRef.current = { text: `⚠ BOSS INCOMING — ${s.boss.name}`, color: s.boss.color, timer: 150 };
             if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
           }
@@ -371,37 +602,37 @@ function RetroSpaceGame({ onClose }) {
             const fType = Math.floor(Math.random() * Math.min(5, 1 + Math.floor(waveRef.current / 2)));
             if (fType === 0) {
               for (let j = -1; j <= 1; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 fe.x = W / 2 + j * 55; fe.y = -30; fe.vx = j * 0.6; fe.vy = fe.baseSpeed;
                 enemies.push(fe);
               }
             } else if (fType === 1) {
               for (let j = 0; j < 4; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 fe.x = W * 0.2 + j * (W * 0.2); fe.y = -30; fe.vy = fe.baseSpeed;
                 enemies.push(fe);
               }
             } else if (fType === 2) {
               for (let j = 0; j < 5; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 const ang = (j / 5) * Math.PI * 2;
                 fe.x = W / 2 + Math.cos(ang) * 60; fe.y = -30 + Math.sin(ang) * 30; fe.vy = fe.baseSpeed * 0.8;
                 enemies.push(fe);
               }
             } else if (fType === 3) {
               for (let j = 0; j < 2; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 fe.x = j === 0 ? -30 : W + 30; fe.y = 80 + Math.random() * (H * 0.2); fe.vx = j === 0 ? fe.baseSpeed : -fe.baseSpeed; fe.vy = 0.3;
                 enemies.push(fe);
               }
               for (let j = 0; j < 2; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 fe.x = W / 2 + (j === 0 ? -30 : 30); fe.y = -30; fe.vy = fe.baseSpeed;
                 enemies.push(fe);
               }
             } else {
               for (let j = 0; j < 3; j++) {
-                const fe = spawnEnemy(W, H, waveRef.current);
+                const fe = spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1);
                 fe.x = W / 2; fe.y = -30 - j * 35; fe.vy = fe.baseSpeed;
                 enemies.push(fe);
               }
@@ -409,7 +640,7 @@ function RetroSpaceGame({ onClose }) {
           } else {
             const spawnCount = waveRef.current >= 5 ? (Math.random() < 0.35 ? 3 : Math.random() < 0.5 ? 2 : 1) : 1;
             for (let sp = 0; sp < spawnCount && enemies.length < maxOnScreen; sp++) {
-              enemies.push(spawnEnemy(W, H, waveRef.current));
+              enemies.push(spawnEnemy(W, H, waveRef.current, s.gameMode === 'endless' ? 1 + s.endlessCycle * 0.5 : 1));
             }
           }
           s.spawnInterval = Math.max(28, 80 - waveRef.current * 5);
@@ -434,17 +665,25 @@ function RetroSpaceGame({ onClose }) {
         ) {
           if (c.type === 'BOMB') {
             enemyBullets.length = 0;
-            for (const en of enemies) { en.hp -= 3; if (en.hp <= 0) en.alive = false; }
+            for (const en of s.enemies) { en.hp -= 3; if (en.hp <= 0) en.alive = false; }
             if (s.bossActive && s.boss && s.boss.alive) { s.boss.hp -= 3; s.boss.flash = 10; }
             if (s.miniBossActive && s.miniBoss && s.miniBoss.alive) { s.miniBoss.hp -= 3; s.miniBoss.flash = 10; }
             s.shakeX = 8; s.shakeY = 8; s.shakeDecay = 0.9;
             explosions.push(...createExplosion(c.x, c.y, 20));
           } else {
-            s.powerUps[c.type] = c.type === 'GHOST' ? GHOST_DURATION : c.type === 'BEAM' ? BEAM_DURATION : c.type === 'MAGNET' ? MAGNET_DURATION : c.type === 'SCORE2X' ? SCORE2X_DURATION : POWERUP_DURATION;
+            const tierMult = c.tier === 'mega' ? 2 : c.tier === 'enhanced' ? 1.5 : 1;
+            const baseDur = c.type === 'GHOST' ? GHOST_DURATION : c.type === 'BEAM' ? BEAM_DURATION : c.type === 'MAGNET' ? MAGNET_DURATION : c.type === 'SCORE2X' ? SCORE2X_DURATION : POWERUP_DURATION;
+            s.powerUps[c.type] = Math.floor(baseDur * tierMult);
+            if (c.tier === 'mega') {
+              enemyBullets.length = 0;
+              for (const en of s.enemies) { en.hp -= 1; if (en.hp <= 0) en.alive = false; }
+              s.shakeX = 5; s.shakeY = 5; s.shakeDecay = 0.9;
+            }
           }
           if (c.type === 'SHIELD') player.invincible = POWERUP_DURATION;
           if (c.type === 'GHOST') player.invincible = GHOST_DURATION;
           s.floatingTexts.push({ x: c.x, y: c.y, text: c.type === 'BOMB' ? '💥 BOMB!' : PU[c.type].label, color: c.type === 'BOMB' ? '#f59e0b' : PU[c.type].color, life: 60, vy: -1.2 });
+          s.runStats.powerUpsCollected++;
           explosions.push(...createExplosion(c.x, c.y, 8));
           crates.splice(i, 1);
           if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
@@ -473,7 +712,7 @@ function RetroSpaceGame({ onClose }) {
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (!e.alive) {
-          explosions.push(...createExplosion(e.x, e.y));
+          explosions.push(...createExplosion(e.x, e.y, 14, e.color));
           enemies.splice(i, 1);
           continue;
         }
@@ -616,6 +855,7 @@ function RetroSpaceGame({ onClose }) {
             if (!overdriveActive) bullets.splice(b, 1);
             if (e.shield > 0) { e.shield--; explosions.push(...createExplosion(bx, by, 3)); break; }
             e.hp--;
+            s.runStats.shotsHit++;
             explosions.push(...createExplosion(bx, by, 3));
             if (e.hp <= 0) {
               e.alive = false;
@@ -637,6 +877,9 @@ function RetroSpaceGame({ onClose }) {
               bestRef.current = lsGetBest();
               s.combo++;
               s.comboTimer = COMBO_TIMEOUT;
+              s.waveKills = (s.waveKills || 0) + 1;
+              s.runStats.kills++;
+              if (s.combo > s.runStats.highestCombo) s.runStats.highestCombo = s.combo;
               s.shakeX = 3; s.shakeY = 3; s.shakeDecay = 0.85;
               const comboText = comboMultiplier > 1 ? ` ×${comboMultiplier}` : '';
               s.floatingTexts.push({ x: e.x, y: e.y, text: `+${scoreGain}${comboText}`, color: comboMultiplier >= 5 ? '#ff4444' : comboMultiplier >= 4 ? '#ff8800' : comboMultiplier >= 3 ? '#ffcc00' : comboMultiplier >= 2 ? '#ffffff' : 'rgba(255,255,255,0.7)', life: 50, vy: -1.5 });
@@ -664,6 +907,7 @@ function RetroSpaceGame({ onClose }) {
 
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const eb = enemyBullets[i];
+        eb.prevX = eb.x; eb.prevY = eb.y;
         const ebslow = s.abilities.slowActive > 0 ? 0.3 : 1;
         eb.x += eb.vx * ebslow; eb.y += eb.vy * ebslow;
         if (eb.y > H + 20 || eb.x < -20 || eb.x > W + 20 || eb.y < -20) { enemyBullets.splice(i, 1); continue; }
@@ -674,9 +918,18 @@ function RetroSpaceGame({ onClose }) {
           s.shakeX = 5; s.shakeY = 5; s.shakeDecay = 0.85;
           player.invincible = 90; player.flash = 18;
           player.health--;
-          if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+          if (player.health <= 0) {
+            livesRef.current--;
+            player.health = MAX_HEALTH;
+            s.deathPieces = [];
+            for (let dp = 0; dp < 5; dp++) {
+              const angle = (dp / 5) * Math.PI * 2 + Math.random() * 0.5;
+              s.deathPieces.push({ x: player.x, y: player.y, vx: Math.cos(angle) * (1.5 + Math.random() * 2), vy: Math.sin(angle) * (1.5 + Math.random() * 2), rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15, life: 1, decay: 0.007 });
+            }
+            s.deathTimer = 90;
+          }
           explosions.push(...createExplosion(player.x, player.y, 8));
-          if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+          if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
           if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
         }
       }
@@ -691,9 +944,18 @@ function RetroSpaceGame({ onClose }) {
           s.shakeX = 5; s.shakeY = 5; s.shakeDecay = 0.85;
           player.invincible = 90; player.flash = 18;
           player.health--;
-          if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+          if (player.health <= 0) {
+            livesRef.current--;
+            player.health = MAX_HEALTH;
+            s.deathPieces = [];
+            for (let dp = 0; dp < 5; dp++) {
+              const angle = (dp / 5) * Math.PI * 2 + Math.random() * 0.5;
+              s.deathPieces.push({ x: player.x, y: player.y, vx: Math.cos(angle) * (1.5 + Math.random() * 2), vy: Math.sin(angle) * (1.5 + Math.random() * 2), rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15, life: 1, decay: 0.007 });
+            }
+            s.deathTimer = 90;
+          }
           explosions.push(...createExplosion(player.x, player.y, 8));
-          if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+          if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
           if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
         }
       }
@@ -702,17 +964,46 @@ function RetroSpaceGame({ onClose }) {
         const boss = s.boss;
         if (!boss.alive) {
           s.shakeX = 10; s.shakeY = 10; s.shakeDecay = 0.88;
-          explosions.push(...createExplosion(boss.x, boss.y, 40));
-          for (let i = 0; i < 3; i++) explosions.push(...createExplosion(boss.x + (Math.random() - 0.5) * boss.W, boss.y + (Math.random() - 0.5) * boss.H, 12));
+          s.screenFlash = 10;
+          explosions.push(...createExplosion(boss.x, boss.y, 40, boss.color));
+          for (let i = 0; i < 3; i++) explosions.push(...createExplosion(boss.x + (Math.random() - 0.5) * boss.W, boss.y + (Math.random() - 0.5) * boss.H, 12, boss.color));
           scoreRef.current += boss.score * (s.powerUps.SCORE2X > 0 ? 2 : 1);
           lsSetBest(scoreRef.current);
           bestRef.current = lsGetBest();
-          s.boss = null; s.bossActive = false; s.levelTimer = LEVEL_DURATION;
+          s.runStats.bossesKilled++;
+          s.boss = null; s.bossActive = false;
+
+          if (levelRef.current >= 35 && s.gameMode === 'normal') {
+            gameStatusRef.current = 'victory';
+            s.runStats.highScore = scoreRef.current;
+            saveRunStats(s.runStats);
+            lsSetBest(scoreRef.current);
+            lsClearSave();
+            bestRef.current = lsGetBest();
+            if (msgRef.current) msgRef.current.show('victory');
+            rafRef.current = requestAnimationFrame(loop);
+            return;
+          }
+
+          if (s.gameMode === 'bossrush') {
+            s.bossRushIndex = (s.bossRushIndex + 1) % BOSS_DEFS.length;
+          }
+          if (s.gameMode === 'endless' && levelRef.current >= 35) {
+            s.endlessCycle++;
+          }
+
+          s.intermission = { timer: 120, level: levelRef.current, kills: s.waveKills || 0 };
+          crates.push({ x: boss.x - 20, y: boss.y, vy: 1, wobble: 0, type: PU_KEYS[Math.floor(Math.random() * PU_KEYS.length)] });
+          crates.push({ x: boss.x + 20, y: boss.y, vy: 1, wobble: Math.PI, type: PU_KEYS[Math.floor(Math.random() * PU_KEYS.length)] });
+          if (levelRef.current % 3 === 0) {
+            const hTypes = ['asteroid_storm', 'black_hole', 'solar_flare'];
+            s.hazard = { type: hTypes[Math.floor(Math.random() * hTypes.length)], timer: 600, x: W / 2, y: H * 0.35, phase: 0 };
+          }
           levelRef.current++; waveRef.current++;
           s.spawnInterval = Math.max(28, 80 - waveRef.current * 5);
           s.waveKillTarget = 8 + waveRef.current * 2;
           s.enemiesKilled = 0;
-          bannerRef.current = { text: `✦ LEVEL ${levelRef.current} — ENGAGE`, color: '#00ff88', timer: 150 };
+          s.waveKills = 0;
           if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
         } else {
           boss.timer++;
@@ -728,7 +1019,18 @@ function RetroSpaceGame({ onClose }) {
             else if (boss.move === 'bounce') { const spd = boss.phase === 2 ? 1.4 : 1; boss.x += boss.vx * spd; boss.y += boss.vy * spd; if (boss.x > W - boss.W / 2 - 20 || boss.x < boss.W / 2 + 20) boss.vx *= -1; if (boss.y > 240 || boss.y < 120) boss.vy *= -1; }
             else if (boss.move === 'circle') { const spd = boss.phase === 2 ? 1.3 : 1; const radius = Math.min(W * 0.25, 120); boss.x = W / 2 + radius * Math.cos(boss.timer * 0.015 * spd); boss.y = 160 + radius * 0.5 * Math.sin(boss.timer * 0.015 * spd); }
             else { const spd = boss.phase === 2 ? 1.3 : 1; boss.x = W / 2 + (W * 0.3) * Math.sin(boss.timer * 0.012); boss.y = 160 + 90 * Math.sin(boss.timer * 0.03 * spd); }
-            if (boss.hp <= boss.maxHp / 2 && boss.phase === 1) { boss.phase = 2; bannerRef.current = { text: `! ${boss.name} — PHASE 2 !`, color: '#ff2222', timer: 120 }; }
+            if (boss.hp <= boss.maxHp / 2 && boss.phase === 1) {
+              boss.phase = 2;
+              boss.flash = 18;
+              s.screenFlash = 8;
+              s.shakeX = 6; s.shakeY = 6; s.shakeDecay = 0.85;
+              bannerRef.current = { text: `! ${boss.name} — PHASE 2 !`, color: '#ff2222', timer: 120 };
+            }
+          }
+          if (!boss.entering && boss.shape === 'carrier' && boss.timer % 600 === 0 && enemies.length < 6) {
+            for (let j = -1; j <= 1; j += 2) {
+              enemies.push({ name: 'Scout Drone', x: boss.x + j * 30, y: boss.y + boss.H / 2, vx: j * 1.5, vy: 2, baseSpeed: 2, hp: 1, maxHp: 1, color: boss.color, shape: 'tri', move: 'straight', power: 'normal', timer: 0, shootTimer: 80 + Math.random() * 60, shield: 0, alive: true });
+            }
           }
           if (!boss.entering) {
             const shootRate = boss.phase === 2 ? 35 : 65;
@@ -750,6 +1052,7 @@ function RetroSpaceGame({ onClose }) {
             const bx = bullets[b].x, by = bullets[b].y;
             if (bx > boss.x - boss.W / 2 && bx < boss.x + boss.W / 2 && by > boss.y - boss.H / 2 && by < boss.y + boss.H / 2) {
               bullets.splice(b, 1); boss.hp--; boss.flash = 6;
+              s.hitStop = 2;
               s.shakeX = 4; s.shakeY = 4; s.shakeDecay = 0.88;
               s.floatingTexts.push({ x: bx, y: by, text: '-1', color: '#ff4444', life: 30, vy: -1 });
               for (let pi = 0; pi < 3; pi++) {
@@ -763,13 +1066,26 @@ function RetroSpaceGame({ onClose }) {
           }
           const bossShielded = s.powerUps.SHIELD > 0 || s.powerUps.GHOST > 0;
           if (player.invincible <= 0 && !bossShielded && boss.alive && Math.abs(boss.x - player.x) < (boss.W + SHIP_W) / 2 - 10 && Math.abs(boss.y - player.y) < (boss.H + SHIP_H) / 2 - 10) {
-            s.combo = 0; s.comboTimer = 0;
-            s.shakeX = 6; s.shakeY = 6; s.shakeDecay = 0.82;
-            player.invincible = 90; player.flash = 18;
-            player.health--;
-            if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
-            explosions.push(...createExplosion(player.x, player.y, 8));
-            if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+          s.combo = 0; s.comboTimer = 0;
+          s.shakeX = 5; s.shakeY = 5; s.shakeDecay = 0.85;
+          player.invincible = 90; player.flash = 18;
+          player.health--;
+          s.runStats.damageTaken++;
+          s.noDamageHits++;
+          if (player.health <= 0) {
+            livesRef.current--;
+            player.health = MAX_HEALTH;
+            s.runStats.deaths++;
+            s.noDamageHits = 0;
+            s.deathPieces = [];
+            for (let dp = 0; dp < 5; dp++) {
+              const angle = (dp / 5) * Math.PI * 2 + Math.random() * 0.5;
+              s.deathPieces.push({ x: player.x, y: player.y, vx: Math.cos(angle) * (1.5 + Math.random() * 2), vy: Math.sin(angle) * (1.5 + Math.random() * 2), rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15, life: 1, decay: 0.007 });
+            }
+            s.deathTimer = 90;
+          }
+          explosions.push(...createExplosion(player.x, player.y, 8));
+          if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
             if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
           }
         }
@@ -779,13 +1095,16 @@ function RetroSpaceGame({ onClose }) {
         const mb = s.miniBoss;
         if (!mb.alive) {
           s.shakeX = 7; s.shakeY = 7; s.shakeDecay = 0.86;
-          explosions.push(...createExplosion(mb.x, mb.y, 30));
-          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(mb.x + (Math.random() - 0.5) * mb.W, mb.y + (Math.random() - 0.5) * mb.H, 10));
+          s.screenFlash = 7;
+          explosions.push(...createExplosion(mb.x, mb.y, 30, mb.color));
+          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(mb.x + (Math.random() - 0.5) * mb.W, mb.y + (Math.random() - 0.5) * mb.H, 10, mb.color));
           scoreRef.current += mb.score * (s.powerUps.SCORE2X > 0 ? 2 : 1);
           lsSetBest(scoreRef.current);
           bestRef.current = lsGetBest();
+          s.runStats.miniBossesKilled++;
           s.miniBoss = null; s.miniBossActive = false;
           bannerRef.current = { text: `✦ ${mb.name} DESTROYED`, color: '#00ff88', timer: 120 };
+          crates.push({ x: mb.x, y: mb.y, vy: 1, wobble: 0, type: PU_KEYS[Math.floor(Math.random() * PU_KEYS.length)] });
           if (Math.random() < 0.4) {
             s.lifePickups.push({ x: mb.x, y: mb.y, vy: 1.2, wobble: Math.random() * Math.PI * 2, alive: true });
           }
@@ -817,6 +1136,9 @@ function RetroSpaceGame({ onClose }) {
           }
           if (mb.hp <= mb.maxHp * 0.5 && mb.phase === 1) {
             mb.phase = 2;
+            mb.flash = 15;
+            s.screenFlash = 6;
+            s.shakeX = 4; s.shakeY = 4; s.shakeDecay = 0.85;
             bannerRef.current = { text: `! ${mb.name} ENRAGES !`, color: '#ff2222', timer: 100 };
           }
           if (!mb.entering) {
@@ -875,6 +1197,7 @@ function RetroSpaceGame({ onClose }) {
             const bx = bullets[b].x, by = bullets[b].y;
             if (bx > mb.x - mb.W / 2 && bx < mb.x + mb.W / 2 && by > mb.y - mb.H / 2 && by < mb.y + mb.H / 2) {
               bullets.splice(b, 1); mb.hp--; mb.flash = 6;
+              s.hitStop = 2;
               s.shakeX = 3; s.shakeY = 3; s.shakeDecay = 0.88;
               s.floatingTexts.push({ x: bx, y: by, text: '-1', color: '#ff4444', life: 30, vy: -1 });
               explosions.push(...createExplosion(bx, by, 3));
@@ -890,9 +1213,18 @@ function RetroSpaceGame({ onClose }) {
             s.shakeX = 6; s.shakeY = 6; s.shakeDecay = 0.85;
             player.invincible = 90; player.flash = 18;
             player.health--;
-            if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+            if (player.health <= 0) {
+              livesRef.current--;
+              player.health = MAX_HEALTH;
+              s.deathPieces = [];
+              for (let dp = 0; dp < 5; dp++) {
+                const angle = (dp / 5) * Math.PI * 2 + Math.random() * 0.5;
+                s.deathPieces.push({ x: player.x, y: player.y, vx: Math.cos(angle) * (1.5 + Math.random() * 2), vy: Math.sin(angle) * (1.5 + Math.random() * 2), rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15, life: 1, decay: 0.007 });
+              }
+              s.deathTimer = 90;
+            }
             explosions.push(...createExplosion(player.x, player.y, 10));
-            if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+            if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
             if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
           }
         }
@@ -944,9 +1276,56 @@ function RetroSpaceGame({ onClose }) {
         ctx.fillRect(0, 0, W, H);
       }
 
+      if (s.screenFlash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${s.screenFlash * 0.12})`;
+        ctx.fillRect(0, 0, W, H);
+        s.screenFlash--;
+      }
+
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = '#000008';
       ctx.fillRect(0, 0, W, H);
+
+      if (s.nebulae) {
+        for (const n of s.nebulae) {
+          n.y += n.speed;
+          if (n.y - n.r > H + 50) { n.y = -n.r; n.x = Math.random() * W; }
+          const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+          grad.addColorStop(0, n.color);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      if (s.shootingStars) {
+        s.shootingStarTimer = (s.shootingStarTimer || 0) + 1;
+        if (s.shootingStarTimer > 180 + Math.random() * 200 && s.shootingStars.length < 2) {
+          s.shootingStars.push({ x: Math.random() * W, y: -10, vx: 3 + Math.random() * 4, vy: 5 + Math.random() * 4, life: 1, length: 30 + Math.random() * 30 });
+          s.shootingStarTimer = 0;
+        }
+        for (let i = s.shootingStars.length - 1; i >= 0; i--) {
+          const ss = s.shootingStars[i];
+          ss.x += ss.vx; ss.y += ss.vy; ss.life -= 0.03;
+          if (ss.life <= 0 || ss.y > H + 20) { s.shootingStars.splice(i, 1); continue; }
+          ctx.save();
+          ctx.globalAlpha = ss.life * 0.8;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(ss.x, ss.y);
+          ctx.lineTo(ss.x - ss.vx * (ss.length / 8), ss.y - ss.vy * (ss.length / 8));
+          ctx.stroke();
+          ctx.globalAlpha = ss.life;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
 
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
@@ -961,7 +1340,20 @@ function RetroSpaceGame({ onClose }) {
       crates.forEach(c => drawCrate(ctx, c));
       s.lifePickups.forEach(lp => drawLifePickup(ctx, lp));
 
-      enemyBullets.forEach(eb => { ctx.fillStyle = 'rgba(255, 120, 80, 0.9)'; ctx.shadowColor = '#ff7050'; ctx.shadowBlur = 6; ctx.fillRect(eb.x - 1.5, eb.y - 5, 3, 10); });
+      enemyBullets.forEach(eb => {
+        if (eb.prevX !== undefined) {
+          ctx.strokeStyle = 'rgba(255, 120, 80, 0.25)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(eb.prevX, eb.prevY);
+          ctx.lineTo(eb.x, eb.y);
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(255, 120, 80, 0.9)';
+        ctx.shadowColor = '#ff7050';
+        ctx.shadowBlur = 6;
+        ctx.fillRect(eb.x - 1.5, eb.y - 5, 3, 10);
+      });
       ctx.shadowBlur = 0;
 
       bullets.forEach(b => { if (b.beam) { ctx.fillStyle = '#ff6644'; ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 10; ctx.fillRect(b.x - b.w / 2, b.y - 8, b.w, 16); ctx.fillStyle = '#ffffff'; ctx.fillRect(b.x - 1, b.y - 6, 2, 12); } else if (b.homing) drawMissile(ctx, b); else drawBullet(ctx, b); });
@@ -969,11 +1361,50 @@ function RetroSpaceGame({ onClose }) {
 
       enemies.forEach(e => drawEnemy(ctx, e));
 
-      if (player.invincible <= 0 || Math.floor(player.invincible / 6) % 2 === 0) {
+      if (player.invincible <= 0 || Math.floor(player.invincible / (player.invincible < 20 ? 3 : 6)) % 2 === 0) {
         drawShip(ctx, player.x, player.y, player.flash > 0, s.powerUps.SHIELD > 0, player.vx, player.vy);
+        if (player.invincible > 0 && player.invincible < 20) {
+          ctx.save();
+          ctx.globalAlpha = 0.25 + 0.15 * Math.sin(Date.now() / 40);
+          ctx.fillStyle = '#ff2222';
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, SHIP_W / 2 + 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
-      explosions.forEach(ex => { ctx.globalAlpha = ex.life * 0.85; ctx.fillStyle = ex.life > 0.5 ? '#ffffff' : 'rgba(255,200,100,0.8)'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 6; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2); ctx.fill(); });
+      for (const dp of s.deathPieces) {
+        if (dp.life <= 0) continue;
+        ctx.save();
+        ctx.globalAlpha = dp.life;
+        ctx.translate(dp.x, dp.y);
+        ctx.rotate(dp.rot);
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.lineTo(-6, 6);
+        ctx.lineTo(0, 3);
+        ctx.lineTo(6, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      explosions.forEach(ex => {
+        ctx.globalAlpha = ex.life * 0.85;
+        if (ex.color) {
+          ctx.fillStyle = ex.life > 0.5 ? ex.color : (ex.life > 0.25 ? 'rgba(255,200,100,0.8)' : 'rgba(255,255,255,0.3)');
+          ctx.shadowColor = ex.color;
+        } else {
+          ctx.fillStyle = ex.life > 0.5 ? '#ffffff' : 'rgba(255,200,100,0.8)';
+          ctx.shadowColor = '#ffffff';
+        }
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
       if (s.bossActive && s.boss) { drawBoss(ctx, s.boss); drawBossHpBar(ctx, s.boss, W); }
@@ -1022,6 +1453,48 @@ function RetroSpaceGame({ onClose }) {
         } else {
           ctx.globalAlpha = 0.25; ctx.fillStyle = '#00ffcc'; ctx.beginPath(); ctx.arc(joyX, joyY, knobR, 0, Math.PI * 2); ctx.fill();
         }
+
+        const btnR = 22;
+        const abY = H - btnR - 24;
+        const abGap = btnR * 2 + 12;
+        const abStartX = W - btnR - 24 - abGap * 2;
+        const abilities = [
+          { key: 'bomb', label: 'Q', color: '#f59e0b', cd: s.abilities.bombCD, maxCD: 900 },
+          { key: 'slow', label: 'E', color: '#06b6d4', cd: s.abilities.slowCD, maxCD: 1200 },
+          { key: 'overdrive', label: 'R', color: '#f59e0b', cd: s.abilities.overdriveCD, maxCD: 1500 },
+        ];
+        for (let ai = 0; ai < abilities.length; ai++) {
+          const ab = abilities[ai];
+          const bx = abStartX + ai * abGap;
+          const pct = ab.cd > 0 ? ab.cd / ab.maxCD : 0;
+          ctx.save();
+          ctx.globalAlpha = pct > 0 ? 0.15 : 0.3;
+          ctx.strokeStyle = ab.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(bx, abY, btnR, 0, Math.PI * 2);
+          ctx.stroke();
+          if (pct > 0) {
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = ab.color;
+            ctx.beginPath();
+            ctx.arc(bx, abY, btnR, -Math.PI / 2, -Math.PI / 2 + (1 - pct) * Math.PI * 2);
+            ctx.lineTo(bx, abY);
+            ctx.fill();
+          }
+          ctx.globalAlpha = pct > 0 ? 0.25 : 0.6;
+          ctx.font = "bold 13px 'Courier New', monospace";
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = ab.color;
+          ctx.fillText(ab.label, bx, abY);
+          if (pct > 0) {
+            ctx.globalAlpha = 0.3;
+            ctx.font = "7px 'Courier New', monospace";
+            ctx.fillText(`${Math.ceil(ab.cd / 60)}s`, bx, abY + 13);
+          }
+          ctx.restore();
+        }
         ctx.restore();
       }
 
@@ -1058,6 +1531,15 @@ function RetroSpaceGame({ onClose }) {
         ctx.shadowColor = comboColor;
         ctx.shadowBlur = 16;
         ctx.fillText(`${s.combo}× COMBO`, W / 2, 100);
+        if (s.comboTimer > 0 && s.comboTimer < 30) {
+          const warnAlpha = 0.3 + 0.5 * Math.abs(Math.sin(Date.now() / 50));
+          ctx.strokeStyle = `rgba(255,40,40,${warnAlpha})`;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#ff2828';
+          ctx.shadowBlur = 12;
+          const tw = ctx.measureText(`${s.combo}× COMBO`).width;
+          ctx.strokeRect(W / 2 - tw / 2 - 12, 82, tw + 24, 32);
+        }
         ctx.shadowBlur = 0;
         ctx.restore();
       }
@@ -1130,7 +1612,166 @@ function RetroSpaceGame({ onClose }) {
         }
       }
 
+      if (s.hazard) {
+        s.hazard.timer--;
+        s.hazard.phase++;
+        const h = s.hazard;
+        if (h.timer <= 0) {
+          s.hazard = null;
+        } else {
+          if (h.type === 'asteroid_storm') {
+            if (h.phase % 12 === 0) {
+              const side = Math.random() < 0.5 ? -30 : W + 30;
+              const angle = Math.atan2(H * 0.8 - 0, side < 0 ? W * 0.5 : -W * 0.5);
+              const spd = 3 + Math.random() * 3;
+              const da = makeAsteroid(W, H, false);
+              da.x = side; da.y = Math.random() * H * 0.3;
+              da.vx = Math.cos(angle) * spd * (side < 0 ? 1 : -1);
+              da.vy = Math.abs(Math.sin(angle)) * spd + 1;
+              da.dangerous = true;
+              s.asteroids.push(da);
+            }
+            if (h.phase % 60 === 0) {
+              s.floatingTexts.push({ x: W / 2, y: 25, text: '☄ ASTEROID STORM', color: '#f97316', life: 60, vy: 0 });
+            }
+          } else if (h.type === 'black_hole') {
+            h.x = W / 2 + Math.sin(h.phase * 0.008) * W * 0.15;
+            h.y = H * 0.35 + Math.cos(h.phase * 0.006) * H * 0.1;
+            const pullStrength = 0.4;
+            const pullR = 180;
+            for (const en of enemies) {
+              const dxBH = h.x - en.x, dyBH = h.y - en.y;
+              const distBH = Math.sqrt(dxBH * dxBH + dyBH * dyBH);
+              if (distBH < pullR) {
+                en.x += (dxBH / distBH) * pullStrength * (1 - distBH / pullR);
+                en.y += (dyBH / distBH) * pullStrength * (1 - distBH / pullR);
+              }
+            }
+            const dxBP = h.x - player.x, dyBP = h.y - player.y;
+            const distBP = Math.sqrt(dxBP * dxBP + dyBP * dyBP);
+            if (distBP < pullR) {
+              player.x += (dxBP / distBP) * pullStrength * 0.3 * (1 - distBP / pullR);
+              player.y += (dyBP / distBP) * pullStrength * 0.3 * (1 - distBP / pullR);
+            }
+            ctx.save();
+            const bhGrad = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, pullR);
+            bhGrad.addColorStop(0, 'rgba(80, 0, 120, 0.35)');
+            bhGrad.addColorStop(0.4, 'rgba(40, 0, 80, 0.15)');
+            bhGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = bhGrad;
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, pullR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = `rgba(140,60,200,${0.3 + 0.2 * Math.sin(h.phase * 0.05)})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, 25 + 5 * Math.sin(h.phase * 0.08), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+            if (h.phase % 60 === 0) {
+              s.floatingTexts.push({ x: W / 2, y: 25, text: '🕳 BLACK HOLE', color: '#8b5cf6', life: 60, vy: 0 });
+            }
+          } else if (h.type === 'solar_flare') {
+            const flareY = (h.phase * 2) % (H + 40) - 20;
+            const telegraph = h.phase % 180 < 30;
+            ctx.save();
+            if (telegraph) {
+              ctx.strokeStyle = `rgba(255,200,0,${0.15 + 0.1 * Math.sin(h.phase * 0.2)})`;
+              ctx.lineWidth = H * 0.06;
+              ctx.beginPath();
+              ctx.moveTo(0, flareY);
+              ctx.lineTo(W, flareY);
+              ctx.stroke();
+            } else if (h.phase % 180 < 60) {
+              ctx.fillStyle = 'rgba(255,180,0,0.12)';
+              ctx.fillRect(0, flareY - 15, W, 30);
+              if (Math.abs(player.y - flareY) < 25 && player.invincible <= 0) {
+                const shielded = s.powerUps.SHIELD > 0 || s.powerUps.GHOST > 0;
+                if (!shielded) {
+                  player.health--;
+                  player.invincible = 45;
+                  player.flash = 12;
+                  s.shakeX = 4; s.shakeY = 4; s.shakeDecay = 0.85;
+                  if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+                  if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+                }
+              }
+            }
+            ctx.restore();
+            if (h.phase % 180 === 0) {
+              s.floatingTexts.push({ x: W / 2, y: 25, text: '☀ SOLAR FLARE', color: '#eab308', life: 60, vy: 0 });
+            }
+          }
+          for (const a of s.asteroids) {
+            if (a.dangerous && a.y > 0 && a.y < H) {
+              if (Math.abs(a.x - player.x) < a.r + SHIP_W / 2 && Math.abs(a.y - player.y) < a.r + SHIP_H / 2) {
+                if (player.invincible <= 0) {
+                  const shielded = s.powerUps.SHIELD > 0 || s.powerUps.GHOST > 0;
+                  if (!shielded) {
+                    player.health--;
+                    player.invincible = 60;
+                    player.flash = 15;
+                    s.shakeX = 4; s.shakeY = 4; s.shakeDecay = 0.85;
+                    if (player.health <= 0) { livesRef.current--; player.health = MAX_HEALTH; }
+                    if (livesRef.current <= 0) { gameStatusRef.current = 'gameover'; s.runStats.highScore = scoreRef.current; saveRunStats(s.runStats); lsSetBest(scoreRef.current); lsClearSave(); bestRef.current = lsGetBest(); if (msgRef.current) msgRef.current.show('gameover'); }
+                  }
+                  a.dangerous = false;
+                }
+              }
+              for (let ei = enemies.length - 1; ei >= 0; ei--) {
+                const en = enemies[ei];
+                if (en.alive && Math.abs(a.x - en.x) < a.r + ENEMY_W / 2 && Math.abs(a.y - en.y) < a.r + ENEMY_H / 2) {
+                  en.hp -= 2;
+                  if (en.hp <= 0) en.alive = false;
+                  a.dangerous = false;
+                }
+              }
+            }
+          }
+        }
+      }
+
       ctx.restore();
+
+      s.runStats.timePlayed = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+
+      checkAchievements(s, scoreRef, waveRef, levelRef);
+
+      for (let i = s.newAchievements.length - 1; i >= 0; i--) {
+        const ach = s.newAchievements[i];
+        ach.timer--;
+        if (ach.timer <= 0) { s.newAchievements.splice(i, 1); continue; }
+        const achAlpha = ach.timer > 240 ? 1 : ach.timer / 240;
+        const achY = 60 + i * 45;
+        ctx.save();
+        ctx.globalAlpha = achAlpha;
+        ctx.fillStyle = 'rgba(0,20,10,0.85)';
+        ctx.beginPath();
+        const rx = W / 2 - 140, ry = achY - 18, rw = 280, rh = 36, rr = 6;
+        ctx.beginPath();
+        ctx.moveTo(rx + rr, ry);
+        ctx.lineTo(rx + rw - rr, ry);
+        ctx.arcTo(rx + rw, ry, rx + rw, ry + rr, rr);
+        ctx.lineTo(rx + rw, ry + rh - rr);
+        ctx.arcTo(rx + rw, ry + rh, rx + rw - rr, ry + rh, rr);
+        ctx.lineTo(rx + rr, ry + rh);
+        ctx.arcTo(rx, ry + rh, rx, ry + rh - rr, rr);
+        ctx.lineTo(rx, ry + rr);
+        ctx.arcTo(rx, ry, rx + rr, ry, rr);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.font = "bold 11px 'Courier New', monospace";
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#00ff88';
+        ctx.fillText(`${ach.icon} ${ach.name}`, W / 2, achY - 3);
+        ctx.font = "8px 'Courier New', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText(ach.desc, W / 2, achY + 11);
+        ctx.restore();
+      }
 
       autoSaveTimerRef.current++;
       if (autoSaveTimerRef.current >= 300) { autoSaveTimerRef.current = 0; lsSetSave({ score: scoreRef.current, lives: livesRef.current, wave: waveRef.current, level: levelRef.current, levelTimer: s.levelTimer }); }
@@ -1213,8 +1854,8 @@ function RetroSpaceGame({ onClose }) {
         </PowerUpBar>
         <HudItem>
           <HudLabel>Controls</HudLabel>
-          <HudValue style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>{isMobile ? 'DRAG TO MOVE · AUTO-FIRE' : '←→ MOVE · SPACE FIRE'}</HudValue>
-          <HudValue style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)' }}>{isMobile ? '' : 'Q BOMB · E SLOW · R OVERDRIVE'}</HudValue>
+          <HudValue style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>{isMobile ? 'DRAG TO MOVE · AUTO-FIRE · TAP Q/E/R' : '←→ MOVE · SPACE FIRE'}</HudValue>
+          <HudValue style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)' }}>{isMobile ? 'DOUBLE-TAP TO PAUSE' : 'Q BOMB · E SLOW · R OVERDRIVE'}</HudValue>
         </HudItem>
       </GameUI>
       <GameCanvas ref={canvasRef} />
@@ -1236,21 +1877,35 @@ function RetroSpaceGame({ onClose }) {
             </>
           ) : (
             <>
-              <MsgTitle color={msgState.type === 'gameover' ? '#ff4444' : '#00ff88'}>{msgState.type === 'gameover' ? 'GAME OVER' : 'YOU WIN'}</MsgTitle>
+              <MsgTitle color={msgState.type === 'gameover' ? '#ff4444' : msgState.type === 'victory' ? '#00ff88' : '#ff4444'}>{msgState.type === 'gameover' ? 'GAME OVER' : msgState.type === 'victory' ? 'VICTORY!' : 'GAME OVER'}</MsgTitle>
               <MsgSub>
                 FINAL SCORE: {String(hudState.score).padStart(6, '0')} | WAVE: {hudState.wave}
                 <br />
                 {hudState.score >= hudState.best && hudState.score > 0 && <span style={{ color: '#ffcc00' }}>★ NEW HIGH SCORE!</span>}
               </MsgSub>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+              {stateRef.current && stateRef.current.runStats && (
+                <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', marginTop: '0.5rem' }}>
+                  <span>KILLS: {stateRef.current.runStats.kills}</span>
+                  <span>BOSSES: {stateRef.current.runStats.bossesKilled}</span>
+                  <span>COMBO: {stateRef.current.runStats.highestCombo}×</span>
+                  <span>ACC: {getAccuracy(stateRef.current.runStats)}%</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <MsgBtn onClick={() => { lsClearSave(); initGame(); setMsgState({ visible: false, type: null }); }}>↺ RESTART</MsgBtn>
+                {msgState.type === 'victory' && (
+                  <>
+                    <MsgBtn onClick={() => { lsClearSave(); initGame(); stateRef.current.gameMode = 'endless'; setMsgState({ visible: false, type: null }); }} style={{ borderColor: '#00ff88', color: '#00ff88' }}>♾ ENDLESS</MsgBtn>
+                    <MsgBtn onClick={() => { lsClearSave(); initGame(); stateRef.current.gameMode = 'bossrush'; stateRef.current.bossRushIndex = 0; setMsgState({ visible: false, type: null }); }} style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>⚔ BOSS RUSH</MsgBtn>
+                  </>
+                )}
                 <MsgBtn onClick={onClose}>✕ EXIT</MsgBtn>
               </div>
             </>
           )}
         </OverlayMessage>
       )}
-      <EscHint>[ ESC ] EXIT GAME</EscHint>
+      <EscHint>[ P ] PAUSE · [ ESC ] EXIT</EscHint>
       <GameTitle>RETRO SPACE — HIJACK.DEV</GameTitle>
     </>
   );

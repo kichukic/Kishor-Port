@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
+import { keyframes, css } from '@emotion/react';
 import { useSound } from '../../hooks/useSound';
 
 const glitchAnim1 = keyframes`
@@ -42,7 +42,9 @@ const TitleContainer = styled.div`
   width: auto;
 `;
 
-const GlitchTitle = styled(motion.h2)`
+const GlitchTitle = styled(motion.h2, {
+  shouldForwardProp: (prop) => prop !== 'isGlitching',
+})`
   font-size: 2.2rem;
   font-weight: 700;
   background: ${({ theme }) => theme.gradientText};
@@ -68,7 +70,7 @@ const GlitchTitle = styled(motion.h2)`
     opacity: 0;
   }
 
-  ${({ isGlitching }) => isGlitching && `
+  ${({ isGlitching }) => isGlitching && css`
     &::before {
       opacity: 0.8;
       animation: ${glitchAnim1} 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;

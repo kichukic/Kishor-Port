@@ -34,6 +34,14 @@ const GameOverlay = styled(motion.div)`
     pointer-events: none;
     z-index: 10;
   }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.65) 100%);
+    pointer-events: none;
+    z-index: 10;
+  }
 `;
 
 const GameCanvas = styled.canvas`

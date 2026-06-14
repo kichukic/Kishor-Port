@@ -1,12 +1,12 @@
 import { ENEMY_DEFS } from '../constants';
 
-export function spawnEnemy(W, H, wave) {
+export function spawnEnemy(W, H, wave, difficultyMult = 1) {
   const maxIdx = Math.min(ENEMY_DEFS.length, 6 + wave * 4);
   const defIdx = Math.floor(Math.random() * maxIdx);
   const def = ENEMY_DEFS[defIdx];
 
   const edge = Math.random();
-  const speed = def.speed * (1 + wave * 0.04) + Math.random() * 0.4;
+  const speed = (def.speed * (1 + wave * 0.04) + Math.random() * 0.4) * difficultyMult;
   let x, y, vx, vy;
 
   if (edge < 0.5) {
@@ -49,13 +49,15 @@ export function spawnEnemy(W, H, wave) {
     vy = speed * 0.3;
   }
 
+  const scaledHp = Math.max(1, Math.round(def.hp * difficultyMult));
+
   return {
     name: def.name,
     x, y,
     vx, vy,
     baseSpeed: speed,
-    hp: def.hp,
-    maxHp: def.hp,
+    hp: scaledHp,
+    maxHp: scaledHp,
     color: def.color,
     shape: def.shape,
     move: def.move,

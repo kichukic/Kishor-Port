@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { keyframes } from '@emotion/react';
+import { keyframes, css } from '@emotion/react';
 import { useSound } from '../../hooks/useSound';
 import { resumeContext } from '../../audio/soundEngine';
 import { AudioContext } from '../../context/AudioContext';
@@ -183,7 +183,7 @@ const GlitchLogo = styled.div`
   position: relative;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 
-  ${({ animate }) => animate && `
+  ${({ animate }) => animate && css`
     animation: ${glitchText} 0.4s steps(1) forwards;
   `}
 
@@ -787,7 +787,7 @@ function BootSequence({ onComplete }) {
             <GlitchLogo animate style={{ fontSize: '2.8rem', marginBottom: '0.2rem' }}>HIJACK</GlitchLogo>
             
             <ImageContainer>
-              <svg viewBox="0 0 400 300" width="100%" height="auto" style={{ overflow: 'visible' }}>
+              <svg viewBox="0 0 400 300" width="100%" style={{ overflow: 'visible' }}>
                 <defs>
                   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
                     <feGaussianBlur stdDeviation="2" result="blur" />

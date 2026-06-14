@@ -69,7 +69,7 @@ export const COMBO_TIMEOUT = 150;
 export const COMBO_MAX = 5;
 export const BOMB_CLEAR_DURATION = 999;
 export const GHOST_DURATION = 300;
-export const BEAM_DURATION = 480;
+export const BEAM_DURATION = 180;
 export const MAGNET_DURATION = 720;
 export const SCORE2X_DURATION = 900;
 
