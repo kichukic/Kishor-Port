@@ -345,6 +345,7 @@ function RetroSpaceGame({ onClose }) {
 
       if (s.particles.length > 500) s.particles.splice(0, s.particles.length - 400);
       if (explosions.length > 500) explosions.splice(0, explosions.length - 400);
+      if (enemyBullets.length > 150) enemyBullets.splice(0, enemyBullets.length - 120);
 
       if (s.hitStop > 0) {
         s.hitStop--;
@@ -521,8 +522,11 @@ function RetroSpaceGame({ onClose }) {
       if (wantFire && now - s.lastShot > (beamActive ? 0 : overdriveActive ? cooldown / 3 : cooldown)) {
         s.lastShot = now;
         if (s.powerUps.HOMING > 0) {
-          bullets.push({ x: player.x - 6, y: player.y - SHIP_H / 2, vx: 0, vy: -MISSILE_SPEED, homing: true });
-          bullets.push({ x: player.x + 6, y: player.y - SHIP_H / 2, vx: 0, vy: -MISSILE_SPEED, homing: true });
+          const homingCount = bullets.filter(b => b.homing).length;
+          if (homingCount < 8) {
+            bullets.push({ x: player.x - 6, y: player.y - SHIP_H / 2, vx: 0, vy: -MISSILE_SPEED, homing: true });
+            bullets.push({ x: player.x + 6, y: player.y - SHIP_H / 2, vx: 0, vy: -MISSILE_SPEED, homing: true });
+          }
         } else if (beamActive) {
           bullets.push({ x: player.x, y: player.y - SHIP_H / 2 - 2, vx: 0, vy: -BULLET_SPEED * 2.5, homing: false, beam: true, w: 6 });
         } else if (s.powerUps.MULTISHOT > 0) {
@@ -603,7 +607,7 @@ function RetroSpaceGame({ onClose }) {
           s.spawnTimer = 0;
           const maxOnScreen = 18 + waveRef.current * 2;
           s.spawnCycle = (s.spawnCycle || 0) + 1;
-          if (s.spawnCycle % 5 === 0 && waveRef.current >= 2 && enemies.length + 4 <= maxOnScreen) {
+          if (s.spawnCycle % 5 === 0 && waveRef.current >= 2 && enemies.length + 5 <= maxOnScreen) {
             const fType = Math.floor(Math.random() * Math.min(5, 1 + Math.floor(waveRef.current / 2)));
             if (fType === 0) {
               for (let j = -1; j <= 1; j++) {
@@ -817,7 +821,7 @@ function RetroSpaceGame({ onClose }) {
             player.y += (dyTr / distTr) * 0.3;
           }
         }
-        if (e.power === 'clone' && e.hp <= 0 && !e.cloned) {
+        if (e.power === 'clone' && e.hp <= 0 && !e.cloned && enemies.length < 35) {
           e.cloned = true;
           for (let j = 0; j < 2; j++) {
             enemies.push({ ...e, x: e.x + (j === 0 ? -18 : 18), y: e.y, hp: Math.max(1, Math.floor(e.maxHp * 0.5)), maxHp: Math.max(1, Math.floor(e.maxHp * 0.5)), timer: 0, shootTimer: 60 + Math.random() * 100, shield: 0, alive: true, power: 'normal' });
@@ -864,7 +868,7 @@ function RetroSpaceGame({ onClose }) {
             explosions.push(...createExplosion(bx, by, 3));
             if (e.hp <= 0) {
               e.alive = false;
-              if (e.power === 'splitter') {
+              if (e.power === 'splitter' && enemies.length < 35) {
                 for (let j = 0; j < 2; j++) {
                   enemies.push({ name: 'Mini Swarmer', x: e.x + (j === 0 ? -15 : 15), y: e.y, vx: (j === 0 ? -1.2 : 1.2) * (e.baseSpeed * 0.8), vy: e.vy * 1.1, baseSpeed: e.baseSpeed, hp: 1, maxHp: 1, color: '#a855f7', shape: 'tri', move: 'sine', power: 'normal', timer: 0, shootTimer: 45 + Math.random() * 90, shield: 0, alive: true });
                 }
@@ -970,8 +974,8 @@ function RetroSpaceGame({ onClose }) {
         if (!boss.alive) {
           s.shakeX = 10; s.shakeY = 10; s.shakeDecay = 0.88;
           s.screenFlash = 10;
-          explosions.push(...createExplosion(boss.x, boss.y, 40, boss.color));
-          for (let i = 0; i < 3; i++) explosions.push(...createExplosion(boss.x + (Math.random() - 0.5) * boss.W, boss.y + (Math.random() - 0.5) * boss.H, 12, boss.color));
+          explosions.push(...createExplosion(boss.x, boss.y, 20, boss.color));
+          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(boss.x + (Math.random() - 0.5) * boss.W, boss.y + (Math.random() - 0.5) * boss.H, 8, boss.color));
           scoreRef.current += boss.score * (s.powerUps.SCORE2X > 0 ? 2 : 1);
           lsSetBest(scoreRef.current);
           bestRef.current = lsGetBest();
@@ -1057,15 +1061,16 @@ function RetroSpaceGame({ onClose }) {
             const bx = bullets[b].x, by = bullets[b].y;
             if (bx > boss.x - boss.W / 2 && bx < boss.x + boss.W / 2 && by > boss.y - boss.H / 2 && by < boss.y + boss.H / 2) {
               bullets.splice(b, 1); boss.hp--; boss.flash = 6;
-              s.hitStop = 2;
-              s.shakeX = 4; s.shakeY = 4; s.shakeDecay = 0.88;
+              s.shakeX = 2; s.shakeY = 2; s.shakeDecay = 0.88;
               s.floatingTexts.push({ x: bx, y: by, text: '-1', color: '#ff4444', life: 30, vy: -1 });
-              for (let pi = 0; pi < 3; pi++) {
+              for (let pi = 0; pi < 2; pi++) {
                 const pa = Math.random() * Math.PI * 2;
                 s.particles.push({ x: bx, y: by, vx: Math.cos(pa) * (1 + Math.random() * 2), vy: Math.sin(pa) * (1 + Math.random() * 2), life: 1, decay: 0.04 + Math.random() * 0.03, r: 1.5 + Math.random() * 2, color: boss.color });
               }
               if (boss.hp <= 0) boss.alive = false;
-              if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
+              if (boss.hp % 5 === 0 || boss.hp <= 0) {
+                if (hudRef.current) hudRef.current.update(scoreRef.current, livesRef.current, waveRef.current, levelRef.current, { ...s.powerUps }, bestRef.current, player.health, s.combo);
+              }
               break;
             }
           }
@@ -1101,8 +1106,8 @@ function RetroSpaceGame({ onClose }) {
         if (!mb.alive) {
           s.shakeX = 7; s.shakeY = 7; s.shakeDecay = 0.86;
           s.screenFlash = 7;
-          explosions.push(...createExplosion(mb.x, mb.y, 30, mb.color));
-          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(mb.x + (Math.random() - 0.5) * mb.W, mb.y + (Math.random() - 0.5) * mb.H, 10, mb.color));
+          explosions.push(...createExplosion(mb.x, mb.y, 16, mb.color));
+          for (let i = 0; i < 2; i++) explosions.push(...createExplosion(mb.x + (Math.random() - 0.5) * mb.W, mb.y + (Math.random() - 0.5) * mb.H, 6, mb.color));
           scoreRef.current += mb.score * (s.powerUps.SCORE2X > 0 ? 2 : 1);
           lsSetBest(scoreRef.current);
           bestRef.current = lsGetBest();
@@ -1202,10 +1207,9 @@ function RetroSpaceGame({ onClose }) {
             const bx = bullets[b].x, by = bullets[b].y;
             if (bx > mb.x - mb.W / 2 && bx < mb.x + mb.W / 2 && by > mb.y - mb.H / 2 && by < mb.y + mb.H / 2) {
               bullets.splice(b, 1); mb.hp--; mb.flash = 6;
-              s.hitStop = 2;
-              s.shakeX = 3; s.shakeY = 3; s.shakeDecay = 0.88;
+              s.shakeX = 2; s.shakeY = 2; s.shakeDecay = 0.88;
               s.floatingTexts.push({ x: bx, y: by, text: '-1', color: '#ff4444', life: 30, vy: -1 });
-              explosions.push(...createExplosion(bx, by, 3));
+              if (Math.random() < 0.5) s.particles.push({ x: bx, y: by, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, life: 1, decay: 0.05, r: 2, color: mb.color });
               if (mb.hp <= 0) mb.alive = false;
               break;
             }

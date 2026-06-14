@@ -12,10 +12,10 @@ export function drawMiniBoss(ctx, boss) {
   ctx.translate(x, y);
 
   ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
-  ctx.shadowBlur = 25 + 12 * pulse;
+  ctx.shadowBlur = 12 + 6 * pulse;
 
   // ── TENTACLES (behind body) ──
-  const tentCount = 6;
+  const tentCount = 4;
   for (let i = 0; i < tentCount; i++) {
     const baseAngle = (i / tentCount) * Math.PI * 2 + timer * 0.008;
     const len = BW * 0.5 + Math.sin(timer * 0.03 + i * 1.2) * 12;
@@ -25,7 +25,7 @@ export function drawMiniBoss(ctx, boss) {
     ctx.lineCap = 'round';
     ctx.beginPath();
 
-    const segments = 8;
+    const segments = 5;
     for (let s = 0; s <= segments; s++) {
       const seg = s / segments;
       const wobble = Math.sin(timer * 0.06 + i * 0.9 + seg * 3) * (10 + seg * 14);
@@ -94,7 +94,7 @@ export function drawMiniBoss(ctx, boss) {
   const mawGlow = isFlashing ? '#ffffff' : (rage ? '#ff0000' : '#ff4444');
   ctx.fillStyle = mawGlow;
   ctx.shadowColor = mawGlow;
-  ctx.shadowBlur = 12 + 4 * pulse;
+  ctx.shadowBlur = 6 + 2 * pulse;
   ctx.beginPath();
   ctx.ellipse(0, BH * 0.08, BW * 0.08, BH * 0.06, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -117,11 +117,10 @@ export function drawMiniBoss(ctx, boss) {
     ctx.fill();
   }
 
-  // ── EYES (3 menacing eyes) ──
+  // ── EYES (2 menacing eyes) ──
   const eyePositions = [
     { ex: -BW * 0.16, ey: -BH * 0.12, r: BW * 0.07 },
     { ex: BW * 0.16,  ey: -BH * 0.12, r: BW * 0.07 },
-    { ex: 0,          ey: -BH * 0.22, r: BW * 0.055 },
   ];
 
   for (const eye of eyePositions) {
@@ -173,7 +172,7 @@ export function drawMiniBoss(ctx, boss) {
   coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = coreGrad;
   ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
-  ctx.shadowBlur = 20 + 8 * pulse;
+  ctx.shadowBlur = 10 + 4 * pulse;
   ctx.beginPath();
   ctx.arc(0, -BH * 0.05, coreR * 2, 0, Math.PI * 2);
   ctx.fill();
@@ -226,7 +225,7 @@ export function drawBoss(ctx, boss) {
   ctx.translate(x, y);
 
   ctx.shadowColor = isFlashing ? '#ffffff' : (rage ? '#ff0000' : color);
-  ctx.shadowBlur = 20 + 10 * pulse;
+  ctx.shadowBlur = 10 + 5 * pulse;
 
   if (shape === 'saucer') {
     ctx.fillStyle = isFlashing ? '#ffffff' : (rage ? `rgba(255,80,80,${pulse})` : `rgba(255,100,100,${pulse * 0.9})`);
