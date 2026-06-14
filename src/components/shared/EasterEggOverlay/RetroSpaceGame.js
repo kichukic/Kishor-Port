@@ -329,17 +329,22 @@ function RetroSpaceGame({ onClose }) {
     }
 
     const loop = () => {
+      try {
       const s = stateRef.current;
       if (!s) { rafRef.current = requestAnimationFrame(loop); return; }
 
       const { W, H, player, bullets, enemyBullets, enemies, crates, explosions, stars, keys } = s;
       const ctx = canvas.getContext('2d');
+      if (!ctx) { rafRef.current = requestAnimationFrame(loop); return; }
       const now = Date.now();
 
       if (gameStatusRef.current !== 'playing') {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
+
+      if (s.particles.length > 500) s.particles.splice(0, s.particles.length - 400);
+      if (explosions.length > 500) explosions.splice(0, explosions.length - 400);
 
       if (s.hitStop > 0) {
         s.hitStop--;
@@ -1629,7 +1634,7 @@ function RetroSpaceGame({ onClose }) {
               da.vx = Math.cos(angle) * spd * (side < 0 ? 1 : -1);
               da.vy = Math.abs(Math.sin(angle)) * spd + 1;
               da.dangerous = true;
-              s.asteroids.push(da);
+              if (s.asteroids.length < 60) s.asteroids.push(da);
             }
             if (h.phase % 60 === 0) {
               s.floatingTexts.push({ x: W / 2, y: 25, text: '☄ ASTEROID STORM', color: '#f97316', life: 60, vy: 0 });
@@ -1777,6 +1782,10 @@ function RetroSpaceGame({ onClose }) {
       if (autoSaveTimerRef.current >= 300) { autoSaveTimerRef.current = 0; lsSetSave({ score: scoreRef.current, lives: livesRef.current, wave: waveRef.current, level: levelRef.current, levelTimer: s.levelTimer }); }
 
       rafRef.current = requestAnimationFrame(loop);
+      } catch (err) {
+        console.error('Game loop error:', err);
+        rafRef.current = requestAnimationFrame(loop);
+      }
     };
 
     rafRef.current = requestAnimationFrame(loop);
