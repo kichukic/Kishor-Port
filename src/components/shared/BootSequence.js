@@ -178,7 +178,7 @@ const GlitchLogo = styled.div`
   font-weight: 900;
   color: #ffffff;
   letter-spacing: 12px;
-  text-transform: uppercase;
+  text-transform: none;
   margin-bottom: 0.5rem;
   position: relative;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
@@ -189,7 +189,7 @@ const GlitchLogo = styled.div`
 
   &::before,
   &::after {
-    content: 'HIJACK';
+    content: 'Kishor';
     position: absolute;
     top: 0;
     left: 0;
@@ -784,7 +784,7 @@ function BootSequence({ onComplete }) {
           zIndex: 10
         }}>
           <HandshakeCard>
-            <GlitchLogo animate style={{ fontSize: '2.8rem', marginBottom: '0.2rem' }}>HIJACK</GlitchLogo>
+            <GlitchLogo animate style={{ fontSize: '2.8rem', marginBottom: '0.2rem' }}>Kishor</GlitchLogo>
             
             <ImageContainer>
               <svg viewBox="0 0 400 300" width="100%" style={{ overflow: 'visible' }}>
@@ -937,7 +937,7 @@ function BootSequence({ onComplete }) {
           {/* Left Panel - Main Terminal */}
           <LeftPanel>
             {/* Animated Glitch Logo */}
-            <GlitchLogo animate>HIJACK</GlitchLogo>
+            <GlitchLogo animate>Kishor</GlitchLogo>
             <LogoSubtext>Backend Developer</LogoSubtext>
 
             {/* Terminal Body */}
@@ -1079,7 +1079,7 @@ function BootSequence({ onComplete }) {
                 transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
                 style={{ textAlign: 'center' }}
               >
-                <GlitchLogo animate style={{ fontSize: '4rem', marginBottom: '1rem' }}>HIJACK</GlitchLogo>
+                <GlitchLogo animate style={{ fontSize: '4rem', marginBottom: '1rem' }}>Kishor</GlitchLogo>
                 <div style={{
                   fontSize: '0.8rem',
                   color: '#00ff88',
