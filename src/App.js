@@ -10,6 +10,7 @@ import { useKonamiCode } from "./hooks/useKonamiCode";
 import { EasterEggOverlay, AchievementBadgePersistent } from "./components/shared/EasterEggOverlay/index";
 import BootSequence from "./components/shared/BootSequence";
 import AmbientOverlay from "./components/shared/AmbientOverlay";
+import SpiderCrawler from "./components/shared/SpiderCrawler";
 import AudioToggle from "./components/shared/AudioToggle";
 import { useSound } from "./hooks/useSound";
 import { AudioContext } from "./context/AudioContext";
@@ -76,6 +77,8 @@ function AppContent() {
       <EmotionThemeProvider theme={theme}>
         <GlobalStyles />
         <BootSequence onComplete={handleBootComplete} />
+        {/* Mounted from the start: two spiders roam the boot/handshake screen, one stays for the site. */}
+        <SpiderCrawler paused={showGame} showToggle={bootComplete} pair={!bootComplete} />
         {bootComplete && (
           <>
             <VideoBackground />
